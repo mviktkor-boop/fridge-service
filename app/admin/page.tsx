@@ -321,7 +321,7 @@ export default function AdminPage() {
       const fd = new FormData();
       fd.append("file", file);
 
-      const r = await fetch("/api/admin/upload", { method: "POST", body: fd });
+      const r = await fetch("/api/admin/upload", { method: "POST", body: fd, credentials: "include" });
       const j = await r.json().catch(() => ({}));
 
       if (!j?.ok || !j?.url) {
@@ -350,7 +350,7 @@ export default function AdminPage() {
     // физически удалить файл (если uploads)
     if (url && url.startsWith("/uploads/")) {
       try {
-        await fetch(`/api/admin/upload?url=${encodeURIComponent(url)}`, { method: "DELETE" });
+        await fetch(`/api/admin/upload?url=${encodeURIComponent(url)}`, { method: "DELETE", credentials: "include" });
       } catch {
         // не блокируем UI
       }

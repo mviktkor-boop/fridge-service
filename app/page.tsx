@@ -35,6 +35,7 @@ function stars(n: number | undefined) {
 }
 
 export default function HomePage() {
+  // Lead
   const [name, setName] = useState("");
   const [leadPhone, setLeadPhone] = useState("");
   const [model, setModel] = useState("");
@@ -42,6 +43,7 @@ export default function HomePage() {
   const [status, setStatus] = useState<SendStatus>("idle");
   const [errorText, setErrorText] = useState("");
 
+  // Review
   const [revName, setRevName] = useState("");
   const [revRating, setRevRating] = useState(5);
   const [revText, setRevText] = useState("");
@@ -57,7 +59,9 @@ export default function HomePage() {
         const r = await fetch("/api/settings", { cache: "no-store" });
         const j = await r.json().catch(() => ({}));
         if (j?.ok) setSite(j.settings);
-      } catch {}
+      } catch {
+        // ignore
+      }
     })();
   }, []);
 
@@ -67,7 +71,9 @@ export default function HomePage() {
         const r = await fetch("/api/reviews", { cache: "no-store" });
         const j = await r.json().catch(() => ({}));
         if (j?.ok && Array.isArray(j.reviews)) setReviews(j.reviews);
-      } catch {}
+      } catch {
+        // ignore
+      }
     })();
   }, []);
 
@@ -184,7 +190,7 @@ export default function HomePage() {
 
   const heroTitle =
     !heroTitleRaw || heroTitleRaw === "Ремонт холодильников на дому"
-      ? "Ремонт холодильников в Саратове с выездом сегодня"
+      ? `Ремонт холодильников в ${city} с выездом сегодня`
       : heroTitleRaw;
 
   const heroSubtitle =
@@ -192,11 +198,21 @@ export default function HomePage() {
       ? "Выезд в день обращения • Диагностика • Ремонт на месте"
       : heroSubtitleRaw;
 
+  // Фото мастера (из админки). Если не задано — используем дефолтное.
   const heroImageSrc = (site?.heroImage || "").trim() || "/hero-bg.jpg";
 
+  // ALT под Яндекс
+  const altHero = `Частный мастер Виктор по ремонту холодильников на дому в ${city}`;
+
   function scrollToLeadForm() {
-    document.getElementById("lead-form")?.scrollIntoView({ behavior: "smooth", block: "start" });
+    try {
+      document.getElementById("lead-form")?.scrollIntoView({ behavior: "smooth", block: "start" });
+    } catch {
+      // ignore
+    }
   }
+
+  const badges = ["Без посредников", "Выезд сегодня", "Гарантия"];
 
   return (
     <main className="pageRoot" style={{ maxWidth: 980, margin: "0 auto", padding: "18px 14px" }}>
@@ -213,7 +229,7 @@ export default function HomePage() {
         <div style={{ fontSize: 14, opacity: 0.8 }}>{city} • выезд на дом</div>
 
         <div className="heroGrid" style={{ display: "grid", gap: 18, alignItems: "start", marginTop: 12 }}>
-          <div>
+          <div className="heroText">
             <h1 style={{ margin: 0, fontSize: 34, lineHeight: 1.1 }}>{heroTitle}</h1>
             <p style={{ marginTop: 10, marginBottom: 0, fontSize: 18, opacity: 0.9 }}>{heroSubtitle}</p>
 
@@ -221,7 +237,13 @@ export default function HomePage() {
               <button
                 type="button"
                 onClick={scrollToLeadForm}
-                style={{ padding: "12px 14px", borderRadius: 12, border: "none", fontWeight: 900, cursor: "pointer" }}
+                style={{
+                  padding: "12px 14px",
+                  borderRadius: 12,
+                  border: "none",
+                  fontWeight: 900,
+                  cursor: "pointer",
+                }}
               >
                 Оставить заявку
               </button>
@@ -255,6 +277,7 @@ export default function HomePage() {
           </div>
 
           <aside
+            className="heroPhoto"
             style={{
               borderRadius: 16,
               border: "1px solid rgba(0,0,0,0.12)",
@@ -262,18 +285,52 @@ export default function HomePage() {
               background: "#fff",
             }}
           >
-            <img
-              src={heroImageSrc}
-              onError={(e) => {
-                (e.currentTarget as HTMLImageElement).src = "/hero-bg.jpg";
-              }}
-              alt="Мастер по ремонту холодильников"
-              style={{ width: "100%", display: "block", objectFit: "cover", aspectRatio: "4 / 3" }}
-              loading="lazy"
-            />
-            <div style={{ padding: 12, display: "grid", gap: 4 }}>
-              <div style={{ fontWeight: 900 }}>Мастер Виктор</div>
-              <div style={{ fontSize: 13, opacity: 0.78 }}>Выезд сегодня • Диагностика • Ремонт на месте</div>
+            <div style={{ background: "#f3f4f6" }}>
+              <img
+                src={heroImageSrc}
+                onError={(e) => {
+                  (e.currentTarget as HTMLImageElement).src = "/hero-bg.jpg";
+                }}
+                alt={altHero}
+                style={{
+                  width: "100%",
+                  display: "block",
+                  objectFit: "contain",
+                  aspectRatio: "4 / 3",
+                  maxHeight: 420,
+                }}
+                loading="lazy"
+              />
+            </div>
+
+            {/* WEB: под фото оставляем “Виктор — частный мастер” */}
+            <div style={{ padding: 12, display: "grid", gap: 10, color: "#111" }}>
+              <div style={{ display: "grid", gap: 2 }}>
+                <div style={{ fontWeight: 900, color: "#111" }}>Виктор — частный мастер</div>
+                <div style={{ fontSize: 13, opacity: 0.85, color: "#111" }}>
+                  Ремонт холодильников на дому • {city}
+                </div>
+              </div>
+
+              <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+                {badges.map((b) => (
+                  <span
+                    key={b}
+                    style={{
+                      background: "rgba(0,0,0,0.06)",
+                      border: "1px solid rgba(0,0,0,0.10)",
+                      padding: "5px 10px",
+                      borderRadius: 999,
+                      fontSize: 12,
+                      fontWeight: 800,
+                      letterSpacing: 0.15,
+                      color: "#111",
+                    }}
+                  >
+                    {b}
+                  </span>
+                ))}
+              </div>
             </div>
           </aside>
         </div>
@@ -281,7 +338,12 @@ export default function HomePage() {
 
       <section
         id="lead-form"
-        style={{ marginTop: 18, padding: 18, border: "1px solid rgba(0,0,0,0.12)", borderRadius: 14 }}
+        style={{
+          marginTop: 18,
+          padding: 18,
+          border: "1px solid rgba(0,0,0,0.12)",
+          borderRadius: 14,
+        }}
       >
         <h2 style={{ margin: 0, fontSize: 20 }}>Оставить заявку</h2>
         <p style={{ marginTop: 8, opacity: 0.8 }}>{site?.leadText || "Заполните форму — заявка придёт в Telegram."}</p>
@@ -342,15 +404,83 @@ export default function HomePage() {
         </form>
       </section>
 
+      <section
+        style={{
+          marginTop: 18,
+          padding: 18,
+          border: "1px solid rgba(0,0,0,0.12)",
+          borderRadius: 14,
+        }}
+      >
+        <h2 style={{ margin: 0, fontSize: 20 }}>Оставить отзыв</h2>
+        <p style={{ marginTop: 8, opacity: 0.8 }}>Отзыв придёт в Telegram и будет добавлен на сайт после модерации.</p>
+
+        <form
+          style={{ display: "grid", gap: 10, marginTop: 14 }}
+          onSubmit={(e) => {
+            e.preventDefault();
+            submitReview();
+          }}
+        >
+          <input
+            value={revName}
+            onChange={(e) => setRevName(e.target.value)}
+            placeholder="Имя (необязательно)"
+            autoComplete="name"
+            style={{ padding: 12, borderRadius: 10, border: "1px solid rgba(0,0,0,0.2)" }}
+          />
+          <label style={{ fontSize: 14, opacity: 0.9 }}>
+            Оценка:{" "}
+            <select
+              value={revRating}
+              onChange={(e) => setRevRating(Number(e.target.value))}
+              style={{ marginLeft: 8, padding: "8px 10px", borderRadius: 10, border: "1px solid rgba(0,0,0,0.2)" }}
+            >
+              <option value={5}>5</option>
+              <option value={4}>4</option>
+              <option value={3}>3</option>
+              <option value={2}>2</option>
+              <option value={1}>1</option>
+            </select>
+          </label>
+
+          <textarea
+            value={revText}
+            onChange={(e) => setRevText(e.target.value)}
+            placeholder="Текст отзыва * (минимум 10 символов)"
+            rows={4}
+            style={{ padding: 12, borderRadius: 10, border: "1px solid rgba(0,0,0,0.2)" }}
+          />
+
+          <button
+            type="submit"
+            disabled={revStatus === "sending"}
+            style={{
+              padding: "12px 14px",
+              borderRadius: 12,
+              border: "none",
+              fontWeight: 700,
+              cursor: revStatus === "sending" ? "not-allowed" : "pointer",
+              opacity: revStatus === "sending" ? 0.7 : 1,
+            }}
+          >
+            {revStatus === "sending" ? "Отправка..." : "Отправить отзыв"}
+          </button>
+
+          {revStatus === "ok" && <div style={{ fontSize: 14, opacity: 0.9 }}>✅ Спасибо! Отзыв отправлен на модерацию.</div>}
+          {revStatus === "err" && <div style={{ fontSize: 14, opacity: 0.9 }}>❌ {revError}</div>}
+        </form>
+      </section>
+
       <section style={{ marginTop: 24 }}>
-        <h2 style={{ margin: 0, fontSize: 20 }}>Почему выбирают нас</h2>
+        <h2 style={{ margin: 0, fontSize: 20 }}>Почему выбирают меня</h2>
         <ul style={{ marginTop: 10, lineHeight: 1.6, paddingLeft: 18 }}>
           {(site?.benefits && site.benefits.length
             ? site.benefits
             : [
-                "Работаем по Саратову и ближайшим районам",
-                "Честная диагностика и согласование цены до ремонта",
-                "Опыт, аккуратность, гарантия на выполненные работы",
+                "Частный мастер — без колл-центров и посредников",
+                "Приезжаю лично, ремонтирую на месте",
+                "Честная цена до начала работ",
               ]
           )
             .slice(0, 3)
@@ -381,9 +511,10 @@ export default function HomePage() {
         )}
       </section>
 
+      {/* MOBILE: две кнопки */}
       <div className="mobileBar" role="navigation" aria-label="Быстрые действия">
-        <a className="mobileBarPhone" href={`tel:${sitePhoneTel}`} aria-label={`Позвонить ${sitePhone}`}>
-          {sitePhone}
+        <a className="mobileBarCall" href={`tel:${sitePhoneTel}`} aria-label={`Позвонить ${sitePhone}`}>
+          Позвонить
         </a>
         <button className="mobileBarBtn" type="button" onClick={scrollToLeadForm}>
           Оставить заявку
@@ -393,10 +524,13 @@ export default function HomePage() {
       <style>{`
         .pageRoot { padding-bottom: 32px; }
         .mobileBar { display: none; }
+
         .heroGrid { grid-template-columns: 1.15fr 0.85fr; }
 
         @media (max-width: 720px) {
           .heroGrid { grid-template-columns: 1fr !important; }
+          .heroPhoto { margin-top: 12px; }
+
           .pageRoot { padding-bottom: 96px; }
           .mobileBar {
             display: flex;
@@ -411,30 +545,35 @@ export default function HomePage() {
             border-top: 1px solid rgba(0,0,0,0.12);
             backdrop-filter: blur(8px);
           }
-          .mobileBarPhone {
+          .mobileBarCall {
             flex: 1;
             display: flex;
             align-items: center;
             justify-content: center;
             padding: 12px 12px;
             border-radius: 12px;
-            border: 1px solid rgba(0,0,0,0.18);
+            border: 1px solid rgba(0,0,0,0.12);
             text-decoration: none;
             font-weight: 900;
-            font-size: 18px;
+            font-size: 16px;
             letter-spacing: 0.2px;
-            color: #000;
-            background: #fff;
+            color: #fff;
+            background: #111;
           }
           .mobileBarBtn {
             flex: 1;
             padding: 12px 12px;
             border-radius: 12px;
-            border: none;
+            border: 1px solid rgba(0,0,0,0.12);
             font-weight: 900;
             font-size: 16px;
             cursor: pointer;
+            background: #111;
+            color: #fff;
           }
+          .mobileBarBtn:active { transform: translateY(1px); }
+          .mobileBarBtn:focus-visible { outline: 2px solid rgba(0,0,0,0.35); outline-offset: 2px; }
+        
         }
       `}</style>
     </main>

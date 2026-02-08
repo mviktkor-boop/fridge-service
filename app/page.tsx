@@ -201,7 +201,7 @@ export default function HomePage() {
   // Фото мастера (из админки). Если не задано — используем дефолтное.
   const heroImageSrc = (site?.heroImage || "").trim() || "/hero-bg.jpg";
 
-  // ALT под Яндекс
+  // ALT под Яндекс (без переспама, но с городом)
   const altHero = `Частный мастер Виктор по ремонту холодильников на дому в ${city}`;
 
   function scrollToLeadForm() {
@@ -211,6 +211,12 @@ export default function HomePage() {
       // ignore
     }
   }
+
+  // SEO (2): небольшой «живой» абзац под блоком преимуществ
+  const whyText =
+    `Я — частный мастер по ремонту холодильников в ${city}. ` +
+    `Работаю без посредников: цену согласуем до начала ремонта. ` +
+    `Выезжаю на дом, ремонт выполняю на месте и даю гарантию на работу.`;
 
   const badges = ["Без посредников", "Выезд сегодня", "Гарантия"];
 
@@ -267,6 +273,7 @@ export default function HomePage() {
               </a>
             </div>
 
+            {/* SEO (3): телефон виден текстом в HTML + кликабельный */}
             <div style={{ marginTop: 14, display: "grid", gap: 4 }}>
               <div style={{ fontWeight: 800 }}>Телефон</div>
               <a href={`tel:${sitePhoneTel}`} style={{ fontSize: 22, fontWeight: 900, textDecoration: "none" }}>
@@ -303,7 +310,7 @@ export default function HomePage() {
               />
             </div>
 
-            {/* WEB: под фото оставляем “Виктор — частный мастер” */}
+            {/* WEB: под фото оставляем подпись */}
             <div style={{ padding: 12, display: "grid", gap: 10, color: "#111" }}>
               <div style={{ display: "grid", gap: 2 }}>
                 <div style={{ fontWeight: 900, color: "#111" }}>Виктор — частный мастер</div>
@@ -404,74 +411,6 @@ export default function HomePage() {
         </form>
       </section>
 
-      <section
-        style={{
-          marginTop: 18,
-          padding: 18,
-          border: "1px solid rgba(0,0,0,0.12)",
-          borderRadius: 14,
-        }}
-      >
-        <h2 style={{ margin: 0, fontSize: 20 }}>Оставить отзыв</h2>
-        <p style={{ marginTop: 8, opacity: 0.8 }}>Отзыв придёт в Telegram и будет добавлен на сайт после модерации.</p>
-
-        <form
-          style={{ display: "grid", gap: 10, marginTop: 14 }}
-          onSubmit={(e) => {
-            e.preventDefault();
-            submitReview();
-          }}
-        >
-          <input
-            value={revName}
-            onChange={(e) => setRevName(e.target.value)}
-            placeholder="Имя (необязательно)"
-            autoComplete="name"
-            style={{ padding: 12, borderRadius: 10, border: "1px solid rgba(0,0,0,0.2)" }}
-          />
-          <label style={{ fontSize: 14, opacity: 0.9 }}>
-            Оценка:{" "}
-            <select
-              value={revRating}
-              onChange={(e) => setRevRating(Number(e.target.value))}
-              style={{ marginLeft: 8, padding: "8px 10px", borderRadius: 10, border: "1px solid rgba(0,0,0,0.2)" }}
-            >
-              <option value={5}>5</option>
-              <option value={4}>4</option>
-              <option value={3}>3</option>
-              <option value={2}>2</option>
-              <option value={1}>1</option>
-            </select>
-          </label>
-
-          <textarea
-            value={revText}
-            onChange={(e) => setRevText(e.target.value)}
-            placeholder="Текст отзыва * (минимум 10 символов)"
-            rows={4}
-            style={{ padding: 12, borderRadius: 10, border: "1px solid rgba(0,0,0,0.2)" }}
-          />
-
-          <button
-            type="submit"
-            disabled={revStatus === "sending"}
-            style={{
-              padding: "12px 14px",
-              borderRadius: 12,
-              border: "none",
-              fontWeight: 700,
-              cursor: revStatus === "sending" ? "not-allowed" : "pointer",
-              opacity: revStatus === "sending" ? 0.7 : 1,
-            }}
-          >
-            {revStatus === "sending" ? "Отправка..." : "Отправить отзыв"}
-          </button>
-
-          {revStatus === "ok" && <div style={{ fontSize: 14, opacity: 0.9 }}>✅ Спасибо! Отзыв отправлен на модерацию.</div>}
-          {revStatus === "err" && <div style={{ fontSize: 14, opacity: 0.9 }}>❌ {revError}</div>}
-        </form>
-      </section>
-
       <section style={{ marginTop: 24 }}>
         <h2 style={{ margin: 0, fontSize: 20 }}>Почему выбирают меня</h2>
         <ul style={{ marginTop: 10, lineHeight: 1.6, paddingLeft: 18 }}>
@@ -488,6 +427,8 @@ export default function HomePage() {
               <li key={i}>{t}</li>
             ))}
         </ul>
+
+        <p style={{ marginTop: 10, opacity: 0.9, lineHeight: 1.6 }}>{whyText}</p>
       </section>
 
       <section style={{ marginTop: 22, paddingTop: 18, borderTop: "1px solid rgba(0,0,0,0.15)" }}>
@@ -511,7 +452,7 @@ export default function HomePage() {
         )}
       </section>
 
-      {/* MOBILE: две кнопки */}
+      {/* MOBILE: две одинаковые кнопки */}
       <div className="mobileBar" role="navigation" aria-label="Быстрые действия">
         <a className="mobileBarCall" href={`tel:${sitePhoneTel}`} aria-label={`Позвонить ${sitePhone}`}>
           Позвонить
@@ -573,7 +514,6 @@ export default function HomePage() {
           }
           .mobileBarBtn:active { transform: translateY(1px); }
           .mobileBarBtn:focus-visible { outline: 2px solid rgba(0,0,0,0.35); outline-offset: 2px; }
-        
         }
       `}</style>
     </main>

@@ -2,24 +2,7 @@
 
 import { useEffect, useState } from "react";
 
-export default function HomePage() {
-  // Заявка
-  const [name, setName] = useState("");
-  // phone — зарезервировано под номер мастера (из настроек). Для формы используем leadPhone.
-  const [leadPhone, setLeadPhone] = useState("");
-  const [model, setModel] = useState("");
-  const [problem, setProblem] = useState("");
-
-  const [status, setStatus] = useState<"idle" | "sending" | "ok" | "err">("idle");
-  const [errorText, setErrorText] = useState("");
-
-  // Отзыв
-  const [revName, setRevName] = useState("");
-  const [revRating, setRevRating] = useState(5);
-  const [revText, setRevText] = useState("");
-
-  const [revStatus, setRevStatus] = useState<"idle" | "sending" | "ok" | "err">("idle");
-  const [revError, setRevError] = useState("");
+type SendStatus = "idle" | "sending" | "ok" | "err";
 
 type SiteSettings = {
   phone: string;
@@ -27,11 +10,10 @@ type SiteSettings = {
   hours: string;
   heroTitle: string;
   heroSubtitle: string;
+  heroImage?: string; // фото мастера (из админки)
   leadText: string;
   benefits: string[];
 };
-
-const [site, setSite] = useState<SiteSettings | null>(null);
 
 type PublicReview = {
   id: string;
@@ -41,39 +23,59 @@ type PublicReview = {
   createdAt: number;
 };
 
-const [reviews, setReviews] = useState<PublicReview[]>([]);
+function clampRating(n: number | undefined) {
+  const v = Number(n);
+  if (!Number.isFinite(v)) return 5;
+  return Math.max(1, Math.min(5, Math.round(v)));
+}
 
+function stars(n: number | undefined) {
+  const val = clampRating(n);
+  return "★".repeat(val) + "☆".repeat(5 - val);
+}
 
-useEffect(() => {
-  (async () => {
-    try {
-      const r = await fetch("/api/settings", { cache: "no-store" });
-      const j = await r.json().catch(() => ({}));
-      if (j?.ok) setSite(j.settings);
-    } catch {
-      // если API недоступен — просто остаёмся на хардкоде
-    }
-  })();
-}, []);
+export default function HomePage() {
+  const [name, setName] = useState("");
+  const [leadPhone, setLeadPhone] = useState("");
+  const [model, setModel] = useState("");
+  const [problem, setProblem] = useState("");
+  const [status, setStatus] = useState<SendStatus>("idle");
+  const [errorText, setErrorText] = useState("");
 
-useEffect(() => {
-  (async () => {
-    try {
-      const r = await fetch("/api/reviews", { cache: "no-store" });
-      const j = await r.json().catch(() => ({}));
-      if (j?.ok && Array.isArray(j.reviews)) setReviews(j.reviews);
-    } catch {
-      // ignore
-    }
-  })();
-}, []);
+  const [revName, setRevName] = useState("");
+  const [revRating, setRevRating] = useState(5);
+  const [revText, setRevText] = useState("");
+  const [revStatus, setRevStatus] = useState<SendStatus>("idle");
+  const [revError, setRevError] = useState("");
+
+  const [site, setSite] = useState<SiteSettings | null>(null);
+  const [reviews, setReviews] = useState<PublicReview[]>([]);
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const r = await fetch("/api/settings", { cache: "no-store" });
+        const j = await r.json().catch(() => ({}));
+        if (j?.ok) setSite(j.settings);
+      } catch {}
+    })();
+  }, []);
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const r = await fetch("/api/reviews", { cache: "no-store" });
+        const j = await r.json().catch(() => ({}));
+        if (j?.ok && Array.isArray(j.reviews)) setReviews(j.reviews);
+      } catch {}
+    })();
+  }, []);
 
   async function submitLead() {
     setStatus("sending");
     setErrorText("");
 
     const phoneClean = leadPhone.trim().replace(/[^\d+]/g, "");
-
     if (!phoneClean || phoneClean.length < 6) {
       setStatus("err");
       setErrorText("Введите корректный телефон (минимум 6 цифр)");
@@ -102,14 +104,13 @@ useEffect(() => {
       if (!resp.ok) {
         const data = await resp.json().catch(() => ({}));
         const code = String(data?.error || "Ошибка отправки");
-
         setStatus("err");
         setErrorText(
           code === "invalid_phone"
             ? "Введите корректный телефон (минимум 6 цифр)"
             : code === "tg_not_configured"
-            ? "Telegram не настроен на сервере"
-            : "Ошибка отправки. Попробуйте ещё раз."
+              ? "Telegram не настроен на сервере"
+              : "Ошибка отправки. Попробуйте ещё раз."
         );
         return;
       }
@@ -150,14 +151,13 @@ useEffect(() => {
       if (!resp.ok) {
         const data = await resp.json().catch(() => ({}));
         const code = String(data?.error || "Ошибка отправки");
-
         setRevStatus("err");
         setRevError(
           code === "too_short"
             ? "Отзыв слишком короткий (минимум 10 символов)"
             : code === "tg_not_configured"
-            ? "Telegram не настроен на сервере"
-            : "Ошибка отправки. Попробуйте ещё раз."
+              ? "Telegram не настроен на сервере"
+              : "Ошибка отправки. Попробуйте ещё раз."
         );
         return;
       }
@@ -174,6 +174,7 @@ useEffect(() => {
 
   const city = site?.city || "Саратов";
   const hours = site?.hours || "9:00–21:00 ежедневно";
+
   const sitePhoneRaw = site?.phone || "12345678";
   const sitePhone = sitePhoneRaw.trim();
   const sitePhoneTel = sitePhone.replace(/[^\d+]/g, "");
@@ -191,168 +192,99 @@ useEffect(() => {
       ? "Выезд в день обращения • Диагностика • Ремонт на месте"
       : heroSubtitleRaw;
 
-  const phoneHint = "Позвоните сейчас — отвечу сразу";
-  const trustLine = "Частный мастер • Без посредников • Гарантия на работу";
+  const heroImageSrc = (site?.heroImage || "").trim() || "/hero-bg.jpg";
 
   function scrollToLeadForm() {
-    try {
-      document.getElementById("lead-form")?.scrollIntoView({ behavior: "smooth", block: "start" });
-    } catch {
-      // ignore
-    }
-  }
-
-  function stars(n: number | undefined) {
-    const val = Math.max(1, Math.min(5, Number.isFinite(Number(n)) ? Number(n) : 5));
-    return "★".repeat(val) + "☆".repeat(5 - val);
+    document.getElementById("lead-form")?.scrollIntoView({ behavior: "smooth", block: "start" });
   }
 
   return (
-    <main
-      className="pageRoot"
-      style={{
-        maxWidth: 980,
-        margin: "0 auto",
-        padding: "0 16px 32px",
-        fontFamily: "system-ui, -apple-system, Segoe UI, Roboto, sans-serif",
-      }}
-    >
-      {/* НАВИГАЦИЯ (кнопки) */}
-      <nav
-        style={{
-          display: "flex",
-          gap: 10,
-          padding: "12px 0 14px",
-          marginBottom: 22,
-          borderBottom: "1px solid rgba(0,0,0,0.15)",
-        }}
-      >
-        <a
-          href="/"
-          style={{
-            textDecoration: "none",
-            fontWeight: 700,
-            padding: "10px 12px",
-            borderRadius: 12,
-            border: "1px solid rgba(0,0,0,0.18)",
-            display: "inline-block",
-          }}
-        >
+    <main className="pageRoot" style={{ maxWidth: 980, margin: "0 auto", padding: "18px 14px" }}>
+      <nav style={{ display: "flex", gap: 10, alignItems: "center", marginBottom: 12 }}>
+        <a href="/" style={{ fontWeight: 900, textDecoration: "none" }}>
           Главная
         </a>
-        <a
-          href="/about"
-          style={{
-            textDecoration: "none",
-            fontWeight: 700,
-            padding: "10px 12px",
-            borderRadius: 12,
-            border: "1px solid rgba(0,0,0,0.18)",
-            display: "inline-block",
-          }}
-        >
+        <a href="/about" style={{ opacity: 0.85, textDecoration: "none" }}>
           Обо мне
         </a>
       </nav>
 
-      {/* ШАПКА */}
-      <section
-        style={{
-          marginTop: 0,
-          padding: 18,
-          borderRadius: 16,
-          backgroundImage:
-            "linear-gradient(rgba(0,0,0,0.55), rgba(0,0,0,0.55)), url(/hero-bg.jpg)",
-          backgroundSize: "cover",
-          backgroundPosition: "center",
-          color: "#fff",
-        }}
-      >
-      <header
-  style={{
-    display: "flex",
-    justifyContent: "space-between",
-    gap: 16,
-    alignItems: "center",
-    flexWrap: "wrap",
-  }}
->
-  <div>
-    <div style={{ fontSize: 14, opacity: 0.9 }}>{" "}{city} • выезд на дом</div>
-    <h1 style={{ fontSize: 34, margin: "6px 0 0" }}>
-      {heroTitle}
-    </h1>
-    <p style={{ marginTop: 10, fontSize: 16, opacity: 0.85 }}>
-      {heroSubtitle}
-    </p>
-    <div style={{ marginTop: 8, fontSize: 13, opacity: 0.9 }}>{trustLine}</div>
+      <header style={{ padding: 18, borderRadius: 16, border: "1px solid rgba(0,0,0,0.12)" }}>
+        <div style={{ fontSize: 14, opacity: 0.8 }}>{city} • выезд на дом</div>
 
-    <div style={{ display: "flex", gap: 10, flexWrap: "wrap", marginTop: 14 }}>
-      <button
-        type="button"
-        onClick={scrollToLeadForm}
-        style={{
-          padding: "12px 14px",
-          borderRadius: 12,
-          border: "1px solid rgba(255,255,255,0.35)",
-          background: "rgba(255,255,255,0.14)",
-          color: "#fff",
-          fontWeight: 800,
-          cursor: "pointer",
-        }}
-      >
-        Оставить заявку
-      </button>
+        <div className="heroGrid" style={{ display: "grid", gap: 18, alignItems: "start", marginTop: 12 }}>
+          <div>
+            <h1 style={{ margin: 0, fontSize: 34, lineHeight: 1.1 }}>{heroTitle}</h1>
+            <p style={{ marginTop: 10, marginBottom: 0, fontSize: 18, opacity: 0.9 }}>{heroSubtitle}</p>
 
-      <a
-        href={`tel:${sitePhoneTel}`}
-        style={{
-          padding: "12px 14px",
-          borderRadius: 12,
-          border: "none",
-          background: "#fff",
-          color: "#000",
-          fontWeight: 900,
-          textDecoration: "none",
-          display: "inline-block",
-        }}
-      >
-        Позвонить
-      </a>
-    </div>
-  </div>
+            <div style={{ display: "flex", gap: 10, flexWrap: "wrap", marginTop: 14 }}>
+              <button
+                type="button"
+                onClick={scrollToLeadForm}
+                style={{ padding: "12px 14px", borderRadius: 12, border: "none", fontWeight: 900, cursor: "pointer" }}
+              >
+                Оставить заявку
+              </button>
 
-  <div style={{ textAlign: "right" }}>
-    <div style={{ fontSize: 14, opacity: 0.75 }}>Телефон</div>
-    <div style={{ fontSize: 13, opacity: 0.9, marginTop: 4 }}>{phoneHint}</div>
-    <a
-      href={`tel:${sitePhoneTel}`}
-      style={{ fontSize: 28, fontWeight: 800, textDecoration: "none", letterSpacing: 0.2 }}
-    >
-      {sitePhone}
-    </a>
-    <div style={{ marginTop: 6, fontSize: 14, opacity: 0.75 }}>
-      {hours}
-    </div>
-  </div>
-</header>
-      </section>
+              <a
+                href={`tel:${sitePhoneTel}`}
+                style={{
+                  padding: "12px 14px",
+                  borderRadius: 12,
+                  border: "1px solid rgba(0,0,0,0.18)",
+                  textDecoration: "none",
+                  fontWeight: 900,
+                  display: "inline-flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  background: "#fff",
+                  color: "#000",
+                }}
+              >
+                Позвонить
+              </a>
+            </div>
 
-      {/* ФОРМА ЗАЯВКИ */}
+            <div style={{ marginTop: 14, display: "grid", gap: 4 }}>
+              <div style={{ fontWeight: 800 }}>Телефон</div>
+              <a href={`tel:${sitePhoneTel}`} style={{ fontSize: 22, fontWeight: 900, textDecoration: "none" }}>
+                {sitePhone}
+              </a>
+              <div style={{ fontSize: 14, opacity: 0.85 }}>{hours}</div>
+            </div>
+          </div>
+
+          <aside
+            style={{
+              borderRadius: 16,
+              border: "1px solid rgba(0,0,0,0.12)",
+              overflow: "hidden",
+              background: "#fff",
+            }}
+          >
+            <img
+              src={heroImageSrc}
+              onError={(e) => {
+                (e.currentTarget as HTMLImageElement).src = "/hero-bg.jpg";
+              }}
+              alt="Мастер по ремонту холодильников"
+              style={{ width: "100%", display: "block", objectFit: "cover", aspectRatio: "4 / 3" }}
+              loading="lazy"
+            />
+            <div style={{ padding: 12, display: "grid", gap: 4 }}>
+              <div style={{ fontWeight: 900 }}>Мастер Виктор</div>
+              <div style={{ fontSize: 13, opacity: 0.78 }}>Выезд сегодня • Диагностика • Ремонт на месте</div>
+            </div>
+          </aside>
+        </div>
+      </header>
+
       <section
         id="lead-form"
-        style={{
-          marginTop: 28,
-          padding: 18,
-          border: "1px solid rgba(0,0,0,0.12)",
-          borderRadius: 14,
-          scrollMarginTop: 90,
-        }}
+        style={{ marginTop: 18, padding: 18, border: "1px solid rgba(0,0,0,0.12)", borderRadius: 14 }}
       >
         <h2 style={{ margin: 0, fontSize: 20 }}>Оставить заявку</h2>
-        <p style={{ marginTop: 8, opacity: 0.8 }}>
-          {site?.leadText || "Заполните форму — заявка придёт в Telegram."}
-        </p>
+        <p style={{ marginTop: 8, opacity: 0.8 }}>{site?.leadText || "Заполните форму — заявка придёт в Telegram."}</p>
 
         <form
           style={{ display: "grid", gap: 10, marginTop: 14 }}
@@ -366,47 +298,28 @@ useEffect(() => {
             onChange={(e) => setName(e.target.value)}
             placeholder="Имя"
             autoComplete="name"
-            style={{
-              padding: 12,
-              borderRadius: 10,
-              border: "1px solid rgba(0,0,0,0.2)",
-            }}
+            style={{ padding: 12, borderRadius: 10, border: "1px solid rgba(0,0,0,0.2)" }}
           />
-
           <input
             value={leadPhone}
             onChange={(e) => setLeadPhone(e.target.value)}
             placeholder="Телефон * (например +7 999 123-45-67)"
             inputMode="tel"
             autoComplete="tel"
-            style={{
-              padding: 12,
-              borderRadius: 10,
-              border: "1px solid rgba(0,0,0,0.2)",
-            }}
+            style={{ padding: 12, borderRadius: 10, border: "1px solid rgba(0,0,0,0.2)" }}
           />
-
           <input
             value={model}
             onChange={(e) => setModel(e.target.value)}
             placeholder="Модель холодильника (необязательно)"
-            style={{
-              padding: 12,
-              borderRadius: 10,
-              border: "1px solid rgba(0,0,0,0.2)",
-            }}
+            style={{ padding: 12, borderRadius: 10, border: "1px solid rgba(0,0,0,0.2)" }}
           />
-
           <textarea
             value={problem}
             onChange={(e) => setProblem(e.target.value)}
             placeholder="Опишите проблему *"
             rows={4}
-            style={{
-              padding: 12,
-              borderRadius: 10,
-              border: "1px solid rgba(0,0,0,0.2)",
-            }}
+            style={{ padding: 12, borderRadius: 10, border: "1px solid rgba(0,0,0,0.2)" }}
           />
 
           <button
@@ -424,156 +337,50 @@ useEffect(() => {
             {status === "sending" ? "Отправка..." : "Отправить заявку"}
           </button>
 
-          {status === "ok" && (
-            <div style={{ fontSize: 14, opacity: 0.9 }}>
-              ✅ Заявка отправлена. Скоро вам ответим.
-            </div>
-          )}
-          {status === "err" && (
-            <div style={{ fontSize: 14, opacity: 0.9 }}>❌ {errorText}</div>
-          )}
+          {status === "ok" && <div style={{ fontSize: 14, opacity: 0.9 }}>✅ Заявка отправлена. Скоро вам ответим.</div>}
+          {status === "err" && <div style={{ fontSize: 14, opacity: 0.9 }}>❌ {errorText}</div>}
         </form>
       </section>
 
-      {/* ФОРМА ОТЗЫВА */}
-      <section
-        style={{
-          marginTop: 18,
-          padding: 18,
-          border: "1px solid rgba(0,0,0,0.12)",
-          borderRadius: 14,
-        }}
-      >
-        <h2 style={{ margin: 0, fontSize: 20 }}>Оставить отзыв</h2>
-        <p style={{ marginTop: 8, opacity: 0.8 }}>
-          Отзыв придёт в Telegram и будет добавлен на сайт после модерации.
-        </p>
-
-        <form
-          style={{ display: "grid", gap: 10, marginTop: 14 }}
-          onSubmit={(e) => {
-            e.preventDefault();
-            submitReview();
-          }}
-        >
-          <input
-            value={revName}
-            onChange={(e) => setRevName(e.target.value)}
-            placeholder="Имя (необязательно)"
-            autoComplete="name"
-            style={{
-              padding: 12,
-              borderRadius: 10,
-              border: "1px solid rgba(0,0,0,0.2)",
-            }}
-          />
-
-          <label style={{ fontSize: 14, opacity: 0.9 }}>
-            Оценка:{" "}
-            <select
-              value={revRating}
-              onChange={(e) => setRevRating(Number(e.target.value))}
-              style={{
-                marginLeft: 8,
-                padding: "8px 10px",
-                borderRadius: 10,
-                border: "1px solid rgba(0,0,0,0.2)",
-              }}
-            >
-              <option value={5}>5</option>
-              <option value={4}>4</option>
-              <option value={3}>3</option>
-              <option value={2}>2</option>
-              <option value={1}>1</option>
-            </select>
-          </label>
-
-          <textarea
-            value={revText}
-            onChange={(e) => setRevText(e.target.value)}
-            placeholder="Текст отзыва * (минимум 10 символов)"
-            rows={4}
-            style={{
-              padding: 12,
-              borderRadius: 10,
-              border: "1px solid rgba(0,0,0,0.2)",
-            }}
-          />
-
-          <button
-            type="submit"
-            disabled={revStatus === "sending"}
-            style={{
-              padding: "12px 14px",
-              borderRadius: 12,
-              border: "none",
-              fontWeight: 700,
-              cursor: revStatus === "sending" ? "not-allowed" : "pointer",
-              opacity: revStatus === "sending" ? 0.7 : 1,
-            }}
-          >
-            {revStatus === "sending" ? "Отправка..." : "Отправить отзыв"}
-          </button>
-
-          {revStatus === "ok" && (
-            <div style={{ fontSize: 14, opacity: 0.9 }}>
-              ✅ Спасибо! Отзыв отправлен на модерацию.
-            </div>
-          )}
-          {revStatus === "err" && (
-            <div style={{ fontSize: 14, opacity: 0.9 }}>❌ {revError}</div>
-          )}
-        </form>
-      </section>
-
-      {/* ПРЕИМУЩЕСТВА */}
       <section style={{ marginTop: 24 }}>
         <h2 style={{ margin: 0, fontSize: 20 }}>Почему выбирают нас</h2>
         <ul style={{ marginTop: 10, lineHeight: 1.6, paddingLeft: 18 }}>
-  {(site?.benefits && site.benefits.length ? site.benefits : [
-    "Работаем по Саратову и ближайшим районам",
-    "Честная диагностика и согласование цены до ремонта",
-    "Опыт, аккуратность, гарантия на выполненные работы",
-  ]).slice(0, 3).map((t, i) => (
-    <li key={i}>{t}</li>
-  ))}
-</ul>
+          {(site?.benefits && site.benefits.length
+            ? site.benefits
+            : [
+                "Работаем по Саратову и ближайшим районам",
+                "Честная диагностика и согласование цены до ремонта",
+                "Опыт, аккуратность, гарантия на выполненные работы",
+              ]
+          )
+            .slice(0, 3)
+            .map((t, i) => (
+              <li key={i}>{t}</li>
+            ))}
+        </ul>
       </section>
 
-{/* ОТЗЫВЫ */}
-<section style={{ marginTop: 22, paddingTop: 18, borderTop: "1px solid rgba(0,0,0,0.15)" }}>
-  <h2 style={{ margin: 0, fontSize: 20 }}>Отзывы</h2>
-
-  {reviews.length === 0 ? (
-    <p style={{ marginTop: 10, opacity: 0.8 }}>Пока нет одобренных отзывов.</p>
-  ) : (
-    <div style={{ display: "grid", gap: 12, marginTop: 12 }}>
-      {reviews.slice(0, 6).map((r) => (
-        <div
-          key={r.id}
-          style={{
-            border: "1px solid rgba(0,0,0,0.12)",
-            borderRadius: 14,
-            padding: 14,
-          }}
-        >
-          <div style={{ fontSize: 14, fontWeight: 900, letterSpacing: 0.3 }}>
-            {stars(r.rating)}
+      <section style={{ marginTop: 22, paddingTop: 18, borderTop: "1px solid rgba(0,0,0,0.15)" }}>
+        <h2 style={{ margin: 0, fontSize: 20 }}>Отзывы</h2>
+        {reviews.length === 0 ? (
+          <p style={{ marginTop: 10, opacity: 0.8 }}>Пока нет одобренных отзывов.</p>
+        ) : (
+          <div style={{ display: "grid", gap: 12, marginTop: 12 }}>
+            {reviews.slice(0, 6).map((r) => (
+              <div key={r.id} style={{ border: "1px solid rgba(0,0,0,0.12)", borderRadius: 14, padding: 14 }}>
+                <div style={{ fontSize: 14, fontWeight: 900, letterSpacing: 0.3 }}>{stars(r.rating)}</div>
+                <div style={{ marginTop: 8, whiteSpace: "pre-wrap", opacity: 0.9 }}>
+                  {`${r.name ? r.name.trim() + ": " : ""}${r.text}`}
+                </div>
+                <div style={{ marginTop: 10, fontSize: 13, opacity: 0.65 }}>
+                  {new Date(r.createdAt).toLocaleString("ru-RU")}
+                </div>
+              </div>
+            ))}
           </div>
+        )}
+      </section>
 
-          <div style={{ marginTop: 8, whiteSpace: "pre-wrap", opacity: 0.9 }}>
-            {`${r.name ? r.name.trim() + ": " : ""}${r.text}`}
-          </div>
-          <div style={{ marginTop: 10, fontSize: 13, opacity: 0.65 }}>
-            {new Date(r.createdAt).toLocaleString("ru-RU")}
-          </div>
-        </div>
-      ))}
-    </div>
-  )}
-</section>
-
-      {/* Мобильная панель: телефон всегда на виду + кнопка к форме */}
       <div className="mobileBar" role="navigation" aria-label="Быстрые действия">
         <a className="mobileBarPhone" href={`tel:${sitePhoneTel}`} aria-label={`Позвонить ${sitePhone}`}>
           {sitePhone}
@@ -586,8 +393,10 @@ useEffect(() => {
       <style>{`
         .pageRoot { padding-bottom: 32px; }
         .mobileBar { display: none; }
+        .heroGrid { grid-template-columns: 1.15fr 0.85fr; }
 
         @media (max-width: 720px) {
+          .heroGrid { grid-template-columns: 1fr !important; }
           .pageRoot { padding-bottom: 96px; }
           .mobileBar {
             display: flex;

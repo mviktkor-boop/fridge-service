@@ -10,6 +10,7 @@ type SiteSettings = {
   hours: string;
   heroTitle: string;
   heroSubtitle: string;
+  heroImage?: string;
   leadText: string;
   benefits: string[];
 
@@ -32,6 +33,7 @@ function defaults(): SiteSettings {
     hours: "9:00–21:00 ежедневно",
     heroTitle: "Ремонт холодильников на дому",
     heroSubtitle: "Выезд мастера • Диагностика • Ремонт в день обращения",
+    heroImage: "",
     leadText: "Заполните форму — заявка придёт в Telegram.",
     benefits: [
       "Работаем по Саратову и ближайшим районам",
@@ -66,6 +68,7 @@ function readSettings(): SiteSettings {
     return {
       ...d,
       ...parsed,
+      heroImage: typeof parsed?.heroImage === "string" ? parsed.heroImage : d.heroImage,
       benefits: Array.isArray(parsed?.benefits) ? parsed.benefits : d.benefits,
       aboutPhotos: Array.isArray(parsed?.aboutPhotos) ? parsed.aboutPhotos : d.aboutPhotos,
     };
@@ -140,6 +143,7 @@ export async function POST(req: Request) {
 
   if (typeof body.heroTitle === "string") next.heroTitle = body.heroTitle.trim();
   if (typeof body.heroSubtitle === "string") next.heroSubtitle = body.heroSubtitle.trim();
+  if (typeof body.heroImage === "string") next.heroImage = body.heroImage.trim();
   if (typeof body.leadText === "string") next.leadText = body.leadText.trim();
 
   if (Array.isArray(body.benefits)) {

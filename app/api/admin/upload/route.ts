@@ -61,7 +61,7 @@ export async function POST(req: Request) {
     return NextResponse.json({ ok: false, error: "no_file" }, { status: 400 });
   }
 
-  const maxBytes = 5 * 1024 * 1024; // 5 MB
+  const maxBytes = 20 * 1024 * 1024; // 5 MB
   if (file.size <= 0 || file.size > maxBytes) {
     return NextResponse.json({ ok: false, error: "file_too_large" }, { status: 400 });
   }

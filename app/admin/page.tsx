@@ -16,6 +16,7 @@ type Settings = {
   hours: string;
   heroTitle: string;
   heroSubtitle: string;
+  heroImage?: string;
   leadText: string;
   benefits: string[];
 
@@ -50,6 +51,7 @@ export default function AdminPage() {
 
   // UPLOAD
   const fileRef = useRef<HTMLInputElement | null>(null);
+  const heroFileRef = useRef<HTMLInputElement | null>(null);
   const [uploadMsg, setUploadMsg] = useState("");
 
   // CLEANUP
@@ -338,6 +340,25 @@ export default function AdminPage() {
     }
   }
 
+async function uploadHero(file: File) {
+  if (!settings) return;
+  setUploadMsg("Загрузка фото на главную...");
+  try {
+    const fd = new FormData();
+    fd.append("file", file);
+    const r = await fetch("/api/admin/upload", { method: "POST", body: fd, credentials: "include" });
+    const j = await r.json().catch(() => ({}));
+    if (!j?.ok || !j?.url) {
+      setUploadMsg("❌ Не удалось загрузить фото на главную");
+      return;
+    }
+    setSettings({ ...settings, heroImage: String(j.url) });
+    setUploadMsg("✅ Фото загружено (нажми «Сохранить»)");
+  } catch {
+    setUploadMsg("❌ Ошибка загрузки");
+  }
+}
+
   async function removePhoto(idx: number) {
     if (!settings) return;
 
@@ -489,6 +510,48 @@ export default function AdminPage() {
               onChange={(e) => setSettings({ ...settings, heroSubtitle: e.target.value })}
               placeholder="Подзаголовок"
             />
+<div style={{ padding: 14, border: "1px solid rgba(0,0,0,0.12)", borderRadius: 14 }}>
+  <div style={{ fontWeight: 900, marginBottom: 8 }}>Фото на главной</div>
+  {settings.heroImage ? (
+    <div style={{ display: "grid", gap: 10 }}>
+      <img
+        src={settings.heroImage}
+        alt="Hero"
+        style={{ width: "100%", maxWidth: 520, borderRadius: 14, border: "1px solid rgba(0,0,0,0.12)" }}
+      />
+      <div style={{ fontSize: 13, opacity: 0.75 }}>Текущий путь: {settings.heroImage}</div>
+    </div>
+  ) : (
+    <div style={{ fontSize: 13, opacity: 0.75 }}>Фото не задано (будет использоваться /hero-bg.jpg)</div>
+  )}
+  <div style={{ display: "flex", gap: 10, flexWrap: "wrap", marginTop: 12 }}>
+    <button type="button" onClick={() => heroFileRef.current?.click()}>
+      Загрузить фото
+    </button>
+    <button
+      type="button"
+      onClick={() => setSettings({ ...settings, heroImage: "" })}
+      disabled={!settings.heroImage}
+    >
+      Убрать фото
+    </button>
+    <input
+      ref={heroFileRef}
+      type="file"
+      accept="image/*"
+      style={{ display: "none" }}
+      onChange={(e) => {
+        const f = e.target.files?.[0];
+        if (f) uploadHero(f);
+        e.currentTarget.value = "";
+      }}
+    />
+  </div>
+  <div style={{ marginTop: 8, fontSize: 13, opacity: 0.85 }}>
+    После загрузки нажми <b>«Сохранить»</b>.
+  </div>
+</div>
+
 
             <textarea
               value={settings.leadText}

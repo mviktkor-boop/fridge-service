@@ -1,55 +1,83 @@
 import { NextResponse } from "next/server";
-import bcrypt from "bcryptjs";
-import fs from "fs/promises";
+import fs from "fs";
 import path from "path";
-import { cookies } from "next/headers";
+import bcrypt from "bcryptjs";
+import speakeasy from "speakeasy";
 
-const ADMIN_FILE = path.join(process.cwd(), "data/admin.json");
+export const runtime = "nodejs";
 
-async function sendTelegram(text: string) {
-  const token = process.env.TG_BOT_TOKEN;
-  const chatId = process.env.TG_CHAT_ID;
-  if (!token || !chatId) return;
-  await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ chat_id: chatId, text }),
-  }).catch(() => {});
+function adminFilePath() {
+  return path.join(process.cwd(), "data", "admin.json");
 }
 
-function getClientInfo(request: Request) {
-  const ip =
-    request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
-    request.headers.get("x-real-ip") ||
-    "unknown";
-  const ua = request.headers.get("user-agent") || "unknown";
-  return { ip, ua };
-}
-
-export async function POST(request: Request) {
+function readAdmin(): any {
   try {
-    const { password } = await request.json();
-    const raw = await fs.readFile(ADMIN_FILE, "utf-8");
-    const admin = JSON.parse(raw);
+    const p = adminFilePath();
+    if (!fs.existsSync(p)) return {};
+    return JSON.parse(fs.readFileSync(p, "utf-8") || "{}");
+  } catch {
+    return {};
+  }
+}
 
-    const ok = await bcrypt.compare(password, admin.passwordHash);
-    if (!ok) {
-      return NextResponse.json({ ok: false }, { status: 401 });
-    }
+function readPasswordHash(): string {
+  try {
+    const j = readAdmin();
+    return typeof j.passwordHash === "string" ? j.passwordHash.trim() : "";
+  } catch {
+    return "";
+  }
+}
 
-    (await cookies()).set("admin", "1", {
-      httpOnly: true,
-      sameSite: "lax",
-      path: "/",
+export async function POST(req: Request) {
+  const body = await req.json().catch(() => ({}));
+
+  const password = String(body?.password || "");
+  const code = String(body?.code || "").replace(/\s+/g, "");
+
+  const storedHash = readPasswordHash();
+  if (!storedHash) {
+    // Без хэша мы не пускаем (чтобы не было случайного "пустого" входа).
+    return NextResponse.json({ ok: false, error: "admin_not_configured" }, { status: 401 });
+  }
+
+  let ok = false;
+  try {
+    ok = await bcrypt.compare(password, storedHash);
+  } catch {
+    ok = false;
+  }
+  if (!ok) return NextResponse.json({ ok: false }, { status: 401 });
+
+  // 2FA (если включено)
+  const admin = readAdmin();
+  const totpSecret = typeof admin.totpSecret === "string" ? admin.totpSecret.trim() : "";
+
+  if (totpSecret) {
+    const codeOk = speakeasy.totp.verify({
+      secret: totpSecret,
+      encoding: "base32",
+      token: code,
+      window: 1,
     });
 
-    const { ip, ua } = getClientInfo(request);
-    await sendTelegram(
-      `🔐 Вход в админку\nIP: ${ip}\nUA: ${ua}`
-    );
-
-    return NextResponse.json({ ok: true });
-  } catch (e) {
-    return NextResponse.json({ ok: false }, { status: 500 });
+    if (!codeOk) {
+      return NextResponse.json({ ok: false, error: "need_2fa" }, { status: 401 });
+    }
   }
+
+  const res = NextResponse.json({ ok: true });
+
+  // Простая сессия: cookie admin=1
+  res.cookies.set({
+    name: "admin",
+    value: "1",
+    path: "/",
+    httpOnly: true,
+    sameSite: "lax",
+    secure: true, // на https
+    maxAge: 60 * 60 * 24 * 30, // 30 дней
+  });
+
+  return res;
 }

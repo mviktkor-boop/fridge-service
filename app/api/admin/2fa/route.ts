@@ -1,6 +1,5 @@
 import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
-import crypto from "crypto";
 import fs from "fs";
 import path from "path";
 import bcrypt from "bcryptjs";
@@ -9,37 +8,9 @@ import * as QRCode from "qrcode";
 
 export const runtime = "nodejs";
 
-function sign(payload: string, secret: string) {
-  return crypto.createHmac("sha256", secret).update(payload).digest("hex");
-}
-
 async function isAdminAuthed(): Promise<boolean> {
-  const secret = process.env.ADMIN_SESSION_SECRET || "";
-  if (!secret) return false;
-
   const store = await cookies();
-  const c = store.get("admin_session")?.value;
-  if (!c) return false;
-
-  const parts = c.split(".");
-  if (parts.length !== 3) return false;
-
-  const payload = `${parts[0]}.${parts[1]}`;
-  const sig = parts[2];
-
-  const expected = sign(payload, secret);
-  if (sig.length !== expected.length) return false;
-
-  try {
-    if (!crypto.timingSafeEqual(Buffer.from(sig), Buffer.from(expected))) return false;
-  } catch {
-    return false;
-  }
-
-  const exp = Number(parts[1]);
-  if (!Number.isFinite(exp) || Date.now() > exp) return false;
-
-  return true;
+  return store.get("admin")?.value === "1";
 }
 
 function adminFilePath() {
@@ -68,19 +39,14 @@ function readPasswordHash(): string {
   return typeof j.passwordHash === "string" ? j.passwordHash.trim() : "";
 }
 
-async function verifyPasswordOrEnv(password: string): Promise<boolean> {
+async function verifyPassword(password: string): Promise<boolean> {
   const storedHash = readPasswordHash();
-
-  if (storedHash) {
-    try {
-      return await bcrypt.compare(password, storedHash);
-    } catch {
-      return false;
-    }
+  if (!storedHash) return false;
+  try {
+    return await bcrypt.compare(password, storedHash);
+  } catch {
+    return false;
   }
-
-  const envPass = process.env.ADMIN_PASSWORD || "";
-  return Boolean(envPass) && password === envPass;
 }
 
 function getIssuer() {
@@ -103,7 +69,7 @@ export async function GET() {
     return NextResponse.json({ ok: true, enabled: true });
   }
 
-  // Создаём секрет и сохраняем как pending, пока не подтвердили код
+  // Генерим секрет и сохраняем как pending, пока не подтвердили код
   const issuer = getIssuer();
   const label = getLabel();
 
@@ -174,7 +140,7 @@ export async function POST(req: Request) {
       return NextResponse.json({ ok: false, error: "not_enabled" }, { status: 400 });
     }
 
-    const passOk = await verifyPasswordOrEnv(password);
+    const passOk = await verifyPassword(password);
     if (!passOk) {
       return NextResponse.json({ ok: false, error: "bad_password" }, { status: 401 });
     }

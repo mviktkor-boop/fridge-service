@@ -1,43 +1,14 @@
 import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
-import crypto from "crypto";
 import fs from "fs";
 import path from "path";
 import bcrypt from "bcryptjs";
 
 export const runtime = "nodejs";
 
-function sign(payload: string, secret: string) {
-  return crypto.createHmac("sha256", secret).update(payload).digest("hex");
-}
-
 async function isAdminAuthed(): Promise<boolean> {
-  const secret = process.env.ADMIN_SESSION_SECRET || "";
-  if (!secret) return false;
-
   const store = await cookies();
-  const c = store.get("admin_session")?.value;
-  if (!c) return false;
-
-  const parts = c.split(".");
-  if (parts.length !== 3) return false;
-
-  const payload = `${parts[0]}.${parts[1]}`;
-  const sig = parts[2];
-
-  const expected = sign(payload, secret);
-  if (sig.length !== expected.length) return false;
-
-  try {
-    if (!crypto.timingSafeEqual(Buffer.from(sig), Buffer.from(expected))) return false;
-  } catch {
-    return false;
-  }
-
-  const exp = Number(parts[1]);
-  if (!Number.isFinite(exp) || Date.now() > exp) return false;
-
-  return true;
+  return store.get("admin")?.value === "1";
 }
 
 function adminFilePath() {
@@ -50,8 +21,7 @@ function readPasswordHash(): string {
     if (!fs.existsSync(p)) return "";
     const raw = fs.readFileSync(p, "utf-8");
     const j = JSON.parse(raw || "{}");
-    const h = typeof j.passwordHash === "string" ? j.passwordHash.trim() : "";
-    return h;
+    return typeof j.passwordHash === "string" ? j.passwordHash.trim() : "";
   } catch {
     return "";
   }
@@ -64,9 +34,7 @@ function writePasswordHash(hash: string) {
 
   let cur: any = {};
   try {
-    if (fs.existsSync(p)) {
-      cur = JSON.parse(fs.readFileSync(p, "utf-8") || "{}");
-    }
+    if (fs.existsSync(p)) cur = JSON.parse(fs.readFileSync(p, "utf-8") || "{}");
   } catch {
     cur = {};
   }
@@ -89,18 +57,15 @@ export async function POST(req: Request) {
   }
 
   const storedHash = readPasswordHash();
+  if (!storedHash) {
+    return NextResponse.json({ ok: false, error: "admin_not_configured" }, { status: 400 });
+  }
 
   let oldOk = false;
-
-  if (storedHash) {
-    try {
-      oldOk = await bcrypt.compare(oldPassword, storedHash);
-    } catch {
-      oldOk = false;
-    }
-  } else {
-    const envPass = process.env.ADMIN_PASSWORD || "";
-    oldOk = Boolean(envPass) && oldPassword === envPass;
+  try {
+    oldOk = await bcrypt.compare(oldPassword, storedHash);
+  } catch {
+    oldOk = false;
   }
 
   if (!oldOk) {
@@ -113,13 +78,13 @@ export async function POST(req: Request) {
   // Сбрасываем сессию, чтобы перелогиниться
   const res = NextResponse.json({ ok: true });
   res.cookies.set({
-    name: "admin_session",
+    name: "admin",
     value: "",
     path: "/",
-    expires: new Date(0),
     httpOnly: true,
-    secure: true,
     sameSite: "lax",
+    secure: true,
+    maxAge: 0,
   });
 
   return res;

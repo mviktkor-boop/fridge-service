@@ -6,37 +6,9 @@ import path from "path";
 
 export const runtime = "nodejs";
 
-function sign(payload: string, secret: string) {
-  return crypto.createHmac("sha256", secret).update(payload).digest("hex");
-}
-
 async function isAdminAuthed(): Promise<boolean> {
-  const secret = process.env.ADMIN_SESSION_SECRET || "";
-  if (!secret) return false;
-
   const store = await cookies();
-  const c = store.get("admin_session")?.value;
-  if (!c) return false;
-
-  const parts = c.split(".");
-  if (parts.length !== 3) return false;
-
-  const payload = `${parts[0]}.${parts[1]}`;
-  const sig = parts[2];
-
-  const expected = sign(payload, secret);
-  if (sig.length !== expected.length) return false;
-
-  try {
-    if (!crypto.timingSafeEqual(Buffer.from(sig), Buffer.from(expected))) return false;
-  } catch {
-    return false;
-  }
-
-  const exp = Number(parts[1]);
-  if (!Number.isFinite(exp) || Date.now() > exp) return false;
-
-  return true;
+  return store.get("admin")?.value === "1";
 }
 
 function safeExt(mime: string) {
@@ -61,7 +33,7 @@ export async function POST(req: Request) {
     return NextResponse.json({ ok: false, error: "no_file" }, { status: 400 });
   }
 
-  const maxBytes = 20 * 1024 * 1024; // 5 MB
+  const maxBytes = 20 * 1024 * 1024; // 20 MB
   if (file.size <= 0 || file.size > maxBytes) {
     return NextResponse.json({ ok: false, error: "file_too_large" }, { status: 400 });
   }
@@ -72,7 +44,7 @@ export async function POST(req: Request) {
   }
 
   const buf = Buffer.from(await file.arrayBuffer());
-  const name = `about-${Date.now()}-${crypto.randomBytes(6).toString("hex")}.${ext}`;
+  const name = `upload-${Date.now()}-${crypto.randomBytes(6).toString("hex")}.${ext}`;
 
   const uploadsDir = path.join(process.cwd(), "public", "uploads");
   if (!fs.existsSync(uploadsDir)) fs.mkdirSync(uploadsDir, { recursive: true });
@@ -80,10 +52,7 @@ export async function POST(req: Request) {
   const fullPath = path.join(uploadsDir, name);
   fs.writeFileSync(fullPath, buf);
 
-  // Путь, который можно использовать в <img src="...">
-  const publicUrl = `/uploads/${name}`;
-
-  return NextResponse.json({ ok: true, url: publicUrl }, { status: 200 });
+  return NextResponse.json({ ok: true, url: `/uploads/${name}` }, { status: 200 });
 }
 
 export async function DELETE(req: Request) {
@@ -100,12 +69,10 @@ export async function DELETE(req: Request) {
   const fullPath = path.join(process.cwd(), "public", url);
 
   try {
-    if (fs.existsSync(fullPath)) {
-      fs.unlinkSync(fullPath);
-    }
+    if (fs.existsSync(fullPath)) fs.unlinkSync(fullPath);
   } catch {
     return NextResponse.json({ ok: false, error: "delete_failed" }, { status: 500 });
   }
 
-  return NextResponse.json({ ok: true });
+  return NextResponse.json({ ok: true }, { status: 200 });
 }

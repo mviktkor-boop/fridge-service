@@ -29,6 +29,7 @@ next-env.d.ts
 # ---- project runtime data / uploads (do not commit) ----
 /data/**
 !/data/admin.json.example
+!/data/counters.json.example
 /public/uploads/
 
 # ---- local archives / backups ----
@@ -38,3 +39,6 @@ next-env.d.ts
 _backup_*/
 cookies.txt
 tree.txt
+
+# runtime counters (do not commit)
+/data/counters.json

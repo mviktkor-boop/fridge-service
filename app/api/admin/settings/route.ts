@@ -1,6 +1,5 @@
 import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
-import crypto from "crypto";
 import fs from "fs";
 import path from "path";
 
@@ -19,6 +18,11 @@ type SiteSettings = {
   aboutText: string;
   aboutPhotos: string[];
 };
+
+async function isAdminAuthed(): Promise<boolean> {
+  const store = await cookies();
+  return store.get("admin")?.value === "1";
+}
 
 function dataPath() {
   const dir = path.join(process.cwd(), "data");
@@ -44,7 +48,7 @@ function defaults(): SiteSettings {
     aboutTitle: "Обо мне",
     aboutText:
       "Я мастер по ремонту холодильников в Саратове. Работаю аккуратно, объясняю причины поломки и согласовываю стоимость до ремонта.",
-    aboutPhotos: ["Фото 1", "Фото 2", "Фото 3"],
+    aboutPhotos: [],
   };
 }
 
@@ -63,8 +67,6 @@ function readSettings(): SiteSettings {
     const parsed = JSON.parse(raw || "{}");
     const d = defaults();
 
-    // ВАЖНО: мы специально игнорируем старые SEO-поля (seoTitle/seoDescription/aboutSeo*)
-    // чтобы их наличие в site-settings.json не ломало админку.
     return {
       ...d,
       ...parsed,
@@ -83,39 +85,6 @@ function writeSettings(s: SiteSettings) {
   const { dir, file } = dataPath();
   if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
   fs.writeFileSync(file, JSON.stringify(s, null, 2), "utf-8");
-}
-
-function sign(payload: string, secret: string) {
-  return crypto.createHmac("sha256", secret).update(payload).digest("hex");
-}
-
-async function isAdminAuthed(): Promise<boolean> {
-  const secret = process.env.ADMIN_SESSION_SECRET || "";
-  if (!secret) return false;
-
-  const store = await cookies();
-  const c = store.get("admin_session")?.value;
-  if (!c) return false;
-
-  const parts = c.split(".");
-  if (parts.length !== 3) return false;
-
-  const payload = `${parts[0]}.${parts[1]}`;
-  const sig = parts[2];
-
-  const expected = sign(payload, secret);
-  if (sig.length !== expected.length) return false;
-
-  try {
-    if (!crypto.timingSafeEqual(Buffer.from(sig), Buffer.from(expected))) return false;
-  } catch {
-    return false;
-  }
-
-  const exp = Number(parts[1]);
-  if (!Number.isFinite(exp) || Date.now() > exp) return false;
-
-  return true;
 }
 
 export async function GET() {
@@ -154,7 +123,6 @@ export async function POST(req: Request) {
     if (next.benefits.length === 0) next.benefits = defaults().benefits;
   }
 
-  // ABOUT (видимый текст)
   if (typeof body.aboutTitle === "string") next.aboutTitle = body.aboutTitle.trim();
   if (typeof body.aboutText === "string") next.aboutText = body.aboutText.trim();
 
@@ -162,11 +130,9 @@ export async function POST(req: Request) {
     next.aboutPhotos = body.aboutPhotos
       .map((x: any) => String(x ?? "").trim())
       .filter((x: string) => x.length > 0)
-      .slice(0, 10);
-    if (next.aboutPhotos.length === 0) next.aboutPhotos = defaults().aboutPhotos;
+      .slice(0, 50);
   }
 
   writeSettings(next);
-
   return NextResponse.json({ ok: true, settings: next }, { status: 200 });
 }

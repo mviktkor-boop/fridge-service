@@ -1,110 +1,55 @@
 import { NextResponse } from "next/server";
-import crypto from "crypto";
-import fs from "fs";
-import path from "path";
 import bcrypt from "bcryptjs";
-import speakeasy from "speakeasy";
+import fs from "fs/promises";
+import path from "path";
+import { cookies } from "next/headers";
 
-export const runtime = "nodejs";
+const ADMIN_FILE = path.join(process.cwd(), "data/admin.json");
 
-function adminFilePath() {
-  return path.join(process.cwd(), "data", "admin.json");
+async function sendTelegram(text: string) {
+  const token = process.env.TG_BOT_TOKEN;
+  const chatId = process.env.TG_CHAT_ID;
+  if (!token || !chatId) return;
+  await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ chat_id: chatId, text }),
+  }).catch(() => {});
 }
 
-function readAdmin(): any {
+function getClientInfo(request: Request) {
+  const ip =
+    request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
+    request.headers.get("x-real-ip") ||
+    "unknown";
+  const ua = request.headers.get("user-agent") || "unknown";
+  return { ip, ua };
+}
+
+export async function POST(request: Request) {
   try {
-    const p = adminFilePath();
-    if (!fs.existsSync(p)) return {};
-    return JSON.parse(fs.readFileSync(p, "utf-8") || "{}");
-  } catch {
-    return {};
-  }
-}
+    const { password } = await request.json();
+    const raw = await fs.readFile(ADMIN_FILE, "utf-8");
+    const admin = JSON.parse(raw);
 
-function readPasswordHash(): string {
-  try {
-    const p = adminFilePath();
-    if (!fs.existsSync(p)) return "";
-    const raw = fs.readFileSync(p, "utf-8");
-    const j = JSON.parse(raw || "{}");
-    const h = typeof j.passwordHash === "string" ? j.passwordHash.trim() : "";
-    return h;
-  } catch {
-    return "";
-  }
-}
-
-function sign(payload: string, secret: string) {
-  return crypto.createHmac("sha256", secret).update(payload).digest("hex");
-}
-
-function makeSessionCookie(sessionSecret: string) {
-  const exp = Date.now() + 7 * 24 * 60 * 60 * 1000; // 7 дней
-  const payload = `v1.${exp}`;
-  const sig = sign(payload, sessionSecret);
-  return `${payload}.${sig}`;
-}
-
-export async function POST(req: Request) {
-  const sessionSecret = process.env.ADMIN_SESSION_SECRET || "";
-  if (!sessionSecret) {
-    return NextResponse.json({ ok: false, error: "admin_secret_missing" }, { status: 500 });
-  }
-
-  const body = await req.json().catch(() => ({}));
-  const password = String(body?.password || "");
-
-  const storedHash = readPasswordHash();
-
-  let ok = false;
-
-  // 1) если уже есть хэш — проверяем по bcrypt
-  if (storedHash) {
-    try {
-      ok = await bcrypt.compare(password, storedHash);
-    } catch {
-      ok = false;
+    const ok = await bcrypt.compare(password, admin.passwordHash);
+    if (!ok) {
+      return NextResponse.json({ ok: false }, { status: 401 });
     }
-  } else {
-    // 2) если хэша ещё нет — используем старый ADMIN_PASSWORD из env
-    const envPass = process.env.ADMIN_PASSWORD || "";
-    ok = Boolean(envPass) && password === envPass;
-  }
 
-  if (!ok) {
-    return NextResponse.json({ ok: false }, { status: 401 });
-  }
-
-  // 2FA (если включено)
-  const admin = readAdmin();
-  const totpSecret = typeof admin.totpSecret === "string" ? admin.totpSecret : "";
-
-  if (totpSecret) {
-    const code = String(body?.code || "").replace(/\s+/g, "");
-    const codeOk = speakeasy.totp.verify({
-      secret: totpSecret,
-      encoding: "base32",
-      token: code,
-      window: 1,
+    (await cookies()).set("admin", "1", {
+      httpOnly: true,
+      sameSite: "lax",
+      path: "/",
     });
 
-    if (!codeOk) {
-      // оставим совместимое имя ошибки, чтобы UI мог показать "нужен 2FA"
-      return NextResponse.json({ ok: false, error: "need_2fa" }, { status: 401 });
-    }
+    const { ip, ua } = getClientInfo(request);
+    await sendTelegram(
+      `🔐 Вход в админку\nIP: ${ip}\nUA: ${ua}`
+    );
+
+    return NextResponse.json({ ok: true });
+  } catch (e) {
+    return NextResponse.json({ ok: false }, { status: 500 });
   }
-
-  const res = NextResponse.json({ ok: true });
-
-  res.cookies.set({
-    name: "admin_session",
-    value: makeSessionCookie(sessionSecret),
-    path: "/",
-    expires: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
-    httpOnly: true,
-    secure: true,
-    sameSite: "lax",
-  });
-
-  return res;
 }

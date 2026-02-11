@@ -34,7 +34,11 @@ function stars(n: number | undefined) {
   return "★".repeat(val) + "☆".repeat(5 - val);
 }
 
-export default function HomeClient({ initialSite }: { initialSite: SiteSettings }) {
+export default function HomeClient({
+  initialSite,
+}: {
+  initialSite: SiteSettings;
+}) {
   // Lead
   const [name, setName] = useState("");
   const [leadPhone, setLeadPhone] = useState("");
@@ -117,7 +121,7 @@ export default function HomeClient({ initialSite }: { initialSite: SiteSettings 
             ? "Введите корректный телефон (минимум 6 цифр)"
             : code === "tg_not_configured"
               ? "Telegram не настроен на сервере"
-              : "Ошибка отправки. Попробуйте ещё раз."
+              : "Ошибка отправки. Попробуйте ещё раз.",
         );
         return;
       }
@@ -164,7 +168,7 @@ export default function HomeClient({ initialSite }: { initialSite: SiteSettings 
             ? "Отзыв слишком короткий (минимум 10 символов)"
             : code === "tg_not_configured"
               ? "Telegram не настроен на сервере"
-              : "Ошибка отправки. Попробуйте ещё раз."
+              : "Ошибка отправки. Попробуйте ещё раз.",
         );
         return;
       }
@@ -196,7 +200,8 @@ export default function HomeClient({ initialSite }: { initialSite: SiteSettings 
       : heroTitleRaw;
 
   const heroSubtitle =
-    !heroSubtitleRaw || heroSubtitleRaw === "Выезд мастера • Диагностика • Ремонт в день обращения"
+    !heroSubtitleRaw ||
+    heroSubtitleRaw === "Выезд мастера • Диагностика • Ремонт в день обращения"
       ? "Выезд в день обращения • Диагностика • Ремонт на месте"
       : heroSubtitleRaw;
 
@@ -208,7 +213,9 @@ export default function HomeClient({ initialSite }: { initialSite: SiteSettings 
 
   function scrollToLeadForm() {
     try {
-      document.getElementById("lead-form")?.scrollIntoView({ behavior: "smooth", block: "start" });
+      document
+        .getElementById("lead-form")
+        ?.scrollIntoView({ behavior: "smooth", block: "start" });
     } catch {
       // ignore
     }
@@ -223,8 +230,18 @@ export default function HomeClient({ initialSite }: { initialSite: SiteSettings 
   const badges = ["Без посредников", "Выезд сегодня", "Гарантия"];
 
   return (
-    <main className="pageRoot" style={{ maxWidth: 980, margin: "0 auto", padding: "18px 14px" }}>
-      <nav style={{ display: "flex", gap: 10, alignItems: "center", marginBottom: 12 }}>
+    <main
+      className="pageRoot"
+      style={{ maxWidth: 980, margin: "0 auto", padding: "18px 14px" }}
+    >
+      <nav
+        style={{
+          display: "flex",
+          gap: 10,
+          alignItems: "center",
+          marginBottom: 12,
+        }}
+      >
         <a href="/" style={{ fontWeight: 900, textDecoration: "none" }}>
           Главная
         </a>
@@ -233,15 +250,47 @@ export default function HomeClient({ initialSite }: { initialSite: SiteSettings 
         </a>
       </nav>
 
-      <header style={{ padding: 18, borderRadius: 16, border: "1px solid rgba(0,0,0,0.12)" }}>
+      <header
+        style={{
+          padding: 18,
+          borderRadius: 16,
+          border: "1px solid rgba(0,0,0,0.12)",
+        }}
+      >
         <div style={{ fontSize: 14, opacity: 0.8 }}>{city} • выезд на дом</div>
 
-        <div className="heroGrid" style={{ display: "grid", gap: 18, alignItems: "start", marginTop: 12 }}>
+        <div
+          className="heroGrid"
+          style={{
+            display: "grid",
+            gap: 18,
+            alignItems: "start",
+            marginTop: 12,
+          }}
+        >
           <div className="heroText">
-            <h1 style={{ margin: 0, fontSize: 34, lineHeight: 1.1 }}>{heroTitle}</h1>
-            <p style={{ marginTop: 10, marginBottom: 0, fontSize: 18, opacity: 0.9 }}>{heroSubtitle}</p>
+            <h1 style={{ margin: 0, fontSize: 34, lineHeight: 1.1 }}>
+              {heroTitle}
+            </h1>
+            <p
+              style={{
+                marginTop: 10,
+                marginBottom: 0,
+                fontSize: 18,
+                opacity: 0.9,
+              }}
+            >
+              {heroSubtitle}
+            </p>
 
-            <div style={{ display: "flex", gap: 10, flexWrap: "wrap", marginTop: 14 }}>
+            <div
+              style={{
+                display: "flex",
+                gap: 10,
+                flexWrap: "wrap",
+                marginTop: 14,
+              }}
+            >
               <button
                 type="button"
                 onClick={scrollToLeadForm}
@@ -282,11 +331,20 @@ export default function HomeClient({ initialSite }: { initialSite: SiteSettings 
               <div style={{ fontWeight: 800 }}>Телефон</div>
 
               {telHref ? (
-                <a href={telHref} style={{ fontSize: 22, fontWeight: 900, textDecoration: "none" }}>
+                <a
+                  href={telHref}
+                  style={{
+                    fontSize: 22,
+                    fontWeight: 900,
+                    textDecoration: "none",
+                  }}
+                >
                   {sitePhone}
                 </a>
               ) : (
-                <div style={{ fontSize: 22, fontWeight: 900, opacity: 0.85 }}>{sitePhone || "—"}</div>
+                <div style={{ fontSize: 22, fontWeight: 900, opacity: 0.85 }}>
+                  {sitePhone || "—"}
+                </div>
               )}
 
               <div style={{ fontSize: 14, opacity: 0.85 }}>{hours}</div>
@@ -320,9 +378,13 @@ export default function HomeClient({ initialSite }: { initialSite: SiteSettings 
               />
             </div>
 
-            <div style={{ padding: 12, display: "grid", gap: 10, color: "#111" }}>
+            <div
+              style={{ padding: 12, display: "grid", gap: 10, color: "#111" }}
+            >
               <div style={{ display: "grid", gap: 2 }}>
-                <div style={{ fontWeight: 900, color: "#111" }}>Виктор — частный мастер</div>
+                <div style={{ fontWeight: 900, color: "#111" }}>
+                  Виктор — частный мастер
+                </div>
                 <div style={{ fontSize: 13, opacity: 0.85, color: "#111" }}>
                   Ремонт холодильников на дому • {city}
                 </div>
@@ -362,7 +424,9 @@ export default function HomeClient({ initialSite }: { initialSite: SiteSettings 
         }}
       >
         <h2 style={{ margin: 0, fontSize: 20 }}>Оставить заявку</h2>
-        <p style={{ marginTop: 8, opacity: 0.8 }}>{site?.leadText || "Заполните форму — заявка придёт в Telegram."}</p>
+        <p style={{ marginTop: 8, opacity: 0.8 }}>
+          {site?.leadText || "Заполните форму — заявка придёт в Telegram."}
+        </p>
 
         <form
           style={{ display: "grid", gap: 10, marginTop: 14 }}
@@ -376,7 +440,11 @@ export default function HomeClient({ initialSite }: { initialSite: SiteSettings 
             onChange={(e) => setName(e.target.value)}
             placeholder="Имя"
             autoComplete="name"
-            style={{ padding: 12, borderRadius: 10, border: "1px solid rgba(0,0,0,0.2)" }}
+            style={{
+              padding: 12,
+              borderRadius: 10,
+              border: "1px solid rgba(0,0,0,0.2)",
+            }}
           />
           <input
             value={leadPhone}
@@ -384,20 +452,32 @@ export default function HomeClient({ initialSite }: { initialSite: SiteSettings 
             placeholder="Телефон * (например +7 999 123-45-67)"
             inputMode="tel"
             autoComplete="tel"
-            style={{ padding: 12, borderRadius: 10, border: "1px solid rgba(0,0,0,0.2)" }}
+            style={{
+              padding: 12,
+              borderRadius: 10,
+              border: "1px solid rgba(0,0,0,0.2)",
+            }}
           />
           <input
             value={model}
             onChange={(e) => setModel(e.target.value)}
             placeholder="Модель холодильника (необязательно)"
-            style={{ padding: 12, borderRadius: 10, border: "1px solid rgba(0,0,0,0.2)" }}
+            style={{
+              padding: 12,
+              borderRadius: 10,
+              border: "1px solid rgba(0,0,0,0.2)",
+            }}
           />
           <textarea
             value={problem}
             onChange={(e) => setProblem(e.target.value)}
             placeholder="Опишите проблему *"
             rows={4}
-            style={{ padding: 12, borderRadius: 10, border: "1px solid rgba(0,0,0,0.2)" }}
+            style={{
+              padding: 12,
+              borderRadius: 10,
+              border: "1px solid rgba(0,0,0,0.2)",
+            }}
           />
 
           <button
@@ -415,8 +495,14 @@ export default function HomeClient({ initialSite }: { initialSite: SiteSettings 
             {status === "sending" ? "Отправка..." : "Отправить заявку"}
           </button>
 
-          {status === "ok" && <div style={{ fontSize: 14, opacity: 0.9 }}>✅ Заявка отправлена. Скоро вам ответим.</div>}
-          {status === "err" && <div style={{ fontSize: 14, opacity: 0.9 }}>❌ {errorText}</div>}
+          {status === "ok" && (
+            <div style={{ fontSize: 14, opacity: 0.9 }}>
+              ✅ Заявка отправлена. Скоро вам ответим.
+            </div>
+          )}
+          {status === "err" && (
+            <div style={{ fontSize: 14, opacity: 0.9 }}>❌ {errorText}</div>
+          )}
         </form>
       </section>
 
@@ -437,19 +523,42 @@ export default function HomeClient({ initialSite }: { initialSite: SiteSettings 
             ))}
         </ul>
 
-        <p style={{ marginTop: 10, opacity: 0.9, lineHeight: 1.6 }}>{whyText}</p>
+        <p style={{ marginTop: 10, opacity: 0.9, lineHeight: 1.6 }}>
+          {whyText}
+        </p>
       </section>
 
-      <section style={{ marginTop: 22, paddingTop: 18, borderTop: "1px solid rgba(0,0,0,0.15)" }}>
+      <section
+        style={{
+          marginTop: 22,
+          paddingTop: 18,
+          borderTop: "1px solid rgba(0,0,0,0.15)",
+        }}
+      >
         <h2 style={{ margin: 0, fontSize: 20 }}>Отзывы</h2>
         {reviews.length === 0 ? (
-          <p style={{ marginTop: 10, opacity: 0.8 }}>Пока нет одобренных отзывов.</p>
+          <p style={{ marginTop: 10, opacity: 0.8 }}>
+            Пока нет одобренных отзывов.
+          </p>
         ) : (
           <div style={{ display: "grid", gap: 12, marginTop: 12 }}>
             {reviews.slice(0, 6).map((r) => (
-              <div key={r.id} style={{ border: "1px solid rgba(0,0,0,0.12)", borderRadius: 14, padding: 14 }}>
-                <div style={{ fontSize: 14, fontWeight: 900, letterSpacing: 0.3 }}>{stars(r.rating)}</div>
-                <div style={{ marginTop: 8, whiteSpace: "pre-wrap", opacity: 0.9 }}>
+              <div
+                key={r.id}
+                style={{
+                  border: "1px solid rgba(0,0,0,0.12)",
+                  borderRadius: 14,
+                  padding: 14,
+                }}
+              >
+                <div
+                  style={{ fontSize: 14, fontWeight: 900, letterSpacing: 0.3 }}
+                >
+                  {stars(r.rating)}
+                </div>
+                <div
+                  style={{ marginTop: 8, whiteSpace: "pre-wrap", opacity: 0.9 }}
+                >
                   {`${r.name ? r.name.trim() + ": " : ""}${r.text}`}
                 </div>
                 <div style={{ marginTop: 10, fontSize: 13, opacity: 0.65 }}>
@@ -463,11 +572,23 @@ export default function HomeClient({ initialSite }: { initialSite: SiteSettings 
 
       {/* MOBILE: две кнопки */}
       {telHref && (
-        <div className="mobileBar" role="navigation" aria-label="Быстрые действия">
-          <a className="mobileBarCall" href={telHref} aria-label={`Позвонить ${sitePhone}`}>
+        <div
+          className="mobileBar"
+          role="navigation"
+          aria-label="Быстрые действия"
+        >
+          <a
+            className="mobileBarCall"
+            href={telHref}
+            aria-label={`Позвонить ${sitePhone}`}
+          >
             Позвонить
           </a>
-          <button className="mobileBarBtn" type="button" onClick={scrollToLeadForm}>
+          <button
+            className="mobileBarBtn"
+            type="button"
+            onClick={scrollToLeadForm}
+          >
             Оставить заявку
           </button>
         </div>

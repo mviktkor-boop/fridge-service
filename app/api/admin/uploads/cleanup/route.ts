@@ -48,7 +48,10 @@ function getUsedUrlsFromSettings(): Set<string> {
 
 export async function GET() {
   if (!(await isAdminAuthed())) {
-    return NextResponse.json({ ok: false, error: "unauthorized" }, { status: 401 });
+    return NextResponse.json(
+      { ok: false, error: "unauthorized" },
+      { status: 401 },
+    );
   }
 
   const files = listUploadFiles();
@@ -67,13 +70,16 @@ export async function GET() {
       orphanCount: orphans.length,
       orphans,
     },
-    { status: 200 }
+    { status: 200 },
   );
 }
 
 export async function POST() {
   if (!(await isAdminAuthed())) {
-    return NextResponse.json({ ok: false, error: "unauthorized" }, { status: 401 });
+    return NextResponse.json(
+      { ok: false, error: "unauthorized" },
+      { status: 401 },
+    );
   }
 
   const files = listUploadFiles();
@@ -98,7 +104,9 @@ export async function POST() {
   }
 
   const left = listUploadFiles();
-  const orphansLeft = left.map((f) => `/uploads/${f}`).filter((u) => !used.has(u));
+  const orphansLeft = left
+    .map((f) => `/uploads/${f}`)
+    .filter((u) => !used.has(u));
 
   return NextResponse.json(
     {
@@ -109,6 +117,6 @@ export async function POST() {
       deleted,
       failed,
     },
-    { status: 200 }
+    { status: 200 },
   );
 }

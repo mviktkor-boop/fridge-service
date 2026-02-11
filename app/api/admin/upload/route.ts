@@ -20,7 +20,10 @@ function safeExt(mime: string) {
 
 export async function POST(req: Request) {
   if (!(await isAdminAuthed())) {
-    return NextResponse.json({ ok: false, error: "unauthorized" }, { status: 401 });
+    return NextResponse.json(
+      { ok: false, error: "unauthorized" },
+      { status: 401 },
+    );
   }
 
   const form = await req.formData().catch(() => null);
@@ -35,7 +38,10 @@ export async function POST(req: Request) {
 
   const maxBytes = 20 * 1024 * 1024; // 20 MB
   if (file.size <= 0 || file.size > maxBytes) {
-    return NextResponse.json({ ok: false, error: "file_too_large" }, { status: 400 });
+    return NextResponse.json(
+      { ok: false, error: "file_too_large" },
+      { status: 400 },
+    );
   }
 
   const ext = safeExt(file.type);
@@ -52,12 +58,18 @@ export async function POST(req: Request) {
   const fullPath = path.join(uploadsDir, name);
   fs.writeFileSync(fullPath, buf);
 
-  return NextResponse.json({ ok: true, url: `/uploads/${name}` }, { status: 200 });
+  return NextResponse.json(
+    { ok: true, url: `/uploads/${name}` },
+    { status: 200 },
+  );
 }
 
 export async function DELETE(req: Request) {
   if (!(await isAdminAuthed())) {
-    return NextResponse.json({ ok: false, error: "unauthorized" }, { status: 401 });
+    return NextResponse.json(
+      { ok: false, error: "unauthorized" },
+      { status: 401 },
+    );
   }
 
   const { searchParams } = new URL(req.url);
@@ -71,7 +83,10 @@ export async function DELETE(req: Request) {
   try {
     if (fs.existsSync(fullPath)) fs.unlinkSync(fullPath);
   } catch {
-    return NextResponse.json({ ok: false, error: "delete_failed" }, { status: 500 });
+    return NextResponse.json(
+      { ok: false, error: "delete_failed" },
+      { status: 500 },
+    );
   }
 
   return NextResponse.json({ ok: true }, { status: 200 });

@@ -70,11 +70,16 @@ export async function POST(req: Request) {
   const text = String(body?.text ?? body?.review ?? "").trim();
 
   if (!text || text.length < 5) {
-    return NextResponse.json({ ok: false, error: "empty_review" }, { status: 400 });
+    return NextResponse.json(
+      { ok: false, error: "empty_review" },
+      { status: 400 },
+    );
   }
 
   const review: Review = {
-    id: crypto.randomUUID ? crypto.randomUUID() : crypto.randomBytes(16).toString("hex"),
+    id: crypto.randomUUID
+      ? crypto.randomUUID()
+      : crypto.randomBytes(16).toString("hex"),
     name: name || "Без имени",
     text,
     createdAt: Date.now(),

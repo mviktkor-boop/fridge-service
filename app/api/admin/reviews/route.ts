@@ -43,7 +43,10 @@ function writeAll(list: Review[]) {
 
 export async function GET() {
   if (!(await isAdminAuthed())) {
-    return NextResponse.json({ ok: false, error: "unauthorized" }, { status: 401 });
+    return NextResponse.json(
+      { ok: false, error: "unauthorized" },
+      { status: 401 },
+    );
   }
 
   const all = readAll();
@@ -53,13 +56,16 @@ export async function GET() {
       pending: all.filter((r) => r.status === "pending"),
       approved: all.filter((r) => r.status === "approved"),
     },
-    { status: 200 }
+    { status: 200 },
   );
 }
 
 export async function POST(req: Request) {
   if (!(await isAdminAuthed())) {
-    return NextResponse.json({ ok: false, error: "unauthorized" }, { status: 401 });
+    return NextResponse.json(
+      { ok: false, error: "unauthorized" },
+      { status: 401 },
+    );
   }
 
   const body = await req.json().catch(() => ({}));
@@ -68,14 +74,21 @@ export async function POST(req: Request) {
 
   const all = readAll();
   const idx = all.findIndex((r) => r.id === id);
-  if (idx === -1) return NextResponse.json({ ok: false, error: "not_found" }, { status: 404 });
+  if (idx === -1)
+    return NextResponse.json(
+      { ok: false, error: "not_found" },
+      { status: 404 },
+    );
 
   if (action === "approve") {
     all[idx] = { ...all[idx], status: "approved" };
   } else if (action === "delete") {
     all.splice(idx, 1);
   } else {
-    return NextResponse.json({ ok: false, error: "bad_action" }, { status: 400 });
+    return NextResponse.json(
+      { ok: false, error: "bad_action" },
+      { status: 400 },
+    );
   }
 
   writeAll(all);
@@ -86,6 +99,6 @@ export async function POST(req: Request) {
       pending: all.filter((r) => r.status === "pending"),
       approved: all.filter((r) => r.status === "approved"),
     },
-    { status: 200 }
+    { status: 200 },
   );
 }

@@ -9,7 +9,9 @@ type Counters = {
 };
 
 export default function AdminCountersPage() {
-  const [status, setStatus] = useState<"loading" | "guest" | "authed">("loading");
+  const [status, setStatus] = useState<"loading" | "guest" | "authed">(
+    "loading",
+  );
   const [saving, setSaving] = useState(false);
   const [msg, setMsg] = useState<string>("");
 
@@ -21,7 +23,10 @@ export default function AdminCountersPage() {
 
   async function check() {
     try {
-      const r = await fetch("/api/admin/me", { cache: "no-store", credentials: "include" });
+      const r = await fetch("/api/admin/me", {
+        cache: "no-store",
+        credentials: "include",
+      });
       const j = await r.json().catch(() => ({}));
       setStatus(j?.ok ? "authed" : "guest");
       return Boolean(j?.ok);
@@ -37,7 +42,10 @@ export default function AdminCountersPage() {
     if (!ok) return;
 
     try {
-      const r = await fetch("/api/admin/counters", { cache: "no-store", credentials: "include" });
+      const r = await fetch("/api/admin/counters", {
+        cache: "no-store",
+        credentials: "include",
+      });
       const j = await r.json().catch(() => ({}));
       if (j?.ok) setData(j.data);
       else setMsg("Не удалось загрузить настройки счётчиков.");
@@ -75,7 +83,14 @@ export default function AdminCountersPage() {
       <h1>Админка</h1>
 
       {status === "authed" && (
-        <nav style={{ display: "flex", gap: 10, flexWrap: "wrap", margin: "12px 0 18px" }}>
+        <nav
+          style={{
+            display: "flex",
+            gap: 10,
+            flexWrap: "wrap",
+            margin: "12px 0 18px",
+          }}
+        >
           <a
             href="/admin"
             style={{
@@ -121,7 +136,9 @@ export default function AdminCountersPage() {
       {status === "loading" && <p>Загрузка…</p>}
 
       {status === "guest" && (
-        <div style={{ padding: 16, border: "1px solid #eee", borderRadius: 12 }}>
+        <div
+          style={{ padding: 16, border: "1px solid #eee", borderRadius: 12 }}
+        >
           <p style={{ margin: 0 }}>
             Сначала войди в админку на странице{" "}
             <a href="/admin" style={{ fontWeight: 700 }}>
@@ -138,9 +155,16 @@ export default function AdminCountersPage() {
             <label style={{ fontWeight: 700 }}>Яндекс.Метрика ID</label>
             <input
               value={data.yandexMetrikaId}
-              onChange={(e) => setData((s) => ({ ...s, yandexMetrikaId: e.target.value }))}
+              onChange={(e) =>
+                setData((s) => ({ ...s, yandexMetrikaId: e.target.value }))
+              }
               placeholder="например: 12345678"
-              style={{ padding: 10, borderRadius: 10, border: "1px solid #ddd", maxWidth: 320 }}
+              style={{
+                padding: 10,
+                borderRadius: 10,
+                border: "1px solid #ddd",
+                maxWidth: 320,
+              }}
             />
           </div>
 
@@ -148,12 +172,20 @@ export default function AdminCountersPage() {
             <label style={{ fontWeight: 700 }}>Google Tag ID (GA4)</label>
             <input
               value={data.googleTagId}
-              onChange={(e) => setData((s) => ({ ...s, googleTagId: e.target.value }))}
+              onChange={(e) =>
+                setData((s) => ({ ...s, googleTagId: e.target.value }))
+              }
               placeholder="например: G-XXXXXXXXXX"
-              style={{ padding: 10, borderRadius: 10, border: "1px solid #ddd", maxWidth: 320 }}
+              style={{
+                padding: 10,
+                borderRadius: 10,
+                border: "1px solid #ddd",
+                maxWidth: 320,
+              }}
             />
             <div style={{ fontSize: 12, opacity: 0.8 }}>
-              Можно указывать как <b>G-XXXXXXXXXX</b>, так и <b>GT-...</b> — вставится как есть.
+              Можно указывать как <b>G-XXXXXXXXXX</b>, так и <b>GT-...</b> —
+              вставится как есть.
             </div>
           </div>
 
@@ -161,10 +193,17 @@ export default function AdminCountersPage() {
             <label style={{ fontWeight: 700 }}>Свой подробный код (HTML)</label>
             <textarea
               value={data.customHtml}
-              onChange={(e) => setData((s) => ({ ...s, customHtml: e.target.value }))}
+              onChange={(e) =>
+                setData((s) => ({ ...s, customHtml: e.target.value }))
+              }
               placeholder="<script>...</script>"
               rows={10}
-              style={{ padding: 10, borderRadius: 10, border: "1px solid #ddd", width: "100%" }}
+              style={{
+                padding: 10,
+                borderRadius: 10,
+                border: "1px solid #ddd",
+                width: "100%",
+              }}
             />
             <div style={{ fontSize: 12, opacity: 0.8 }}>
               Вставляется на сайт как есть. Используй только доверенный код.

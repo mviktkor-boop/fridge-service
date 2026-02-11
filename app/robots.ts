@@ -6,13 +6,7 @@ export default function robots(): MetadataRoute.Robots {
       {
         userAgent: "*",
         allow: "/",
-        disallow: [
-          "/admin",
-          "/api",
-          "/_next",
-          "/uploads",
-          "/data",
-        ],
+        disallow: ["/admin", "/api", "/_next", "/uploads", "/data"],
       },
     ],
     host: "https://viktorsar.ru",

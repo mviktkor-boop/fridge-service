@@ -32,13 +32,13 @@ function readJson<T>(filePath: string): T | {} {
 
 function readSeo(): SeoFile {
   return readJson<SeoFile>(
-    path.join(process.cwd(), "data", "seo.json")
+    path.join(process.cwd(), "data", "seo.json"),
   ) as SeoFile;
 }
 
 function readSiteSettings(): SiteSettingsFile {
   return readJson<SiteSettingsFile>(
-    path.join(process.cwd(), "data", "site-settings.json")
+    path.join(process.cwd(), "data", "site-settings.json"),
   ) as SiteSettingsFile;
 }
 
@@ -66,11 +66,10 @@ export default function RootLayout({
 
   const base = (seo.meta?.canonicalBase || "https://viktorsar.ru").replace(
     /\/+$/,
-    ""
+    "",
   );
 
-  const city =
-    settings.city?.replace("е", "") || "Саратов"; // исправляем "Саратове" → "Саратов"
+  const city = settings.city?.replace("е", "") || "Саратов"; // исправляем "Саратове" → "Саратов"
 
   const jsonLd = {
     "@context": "https://schema.org",

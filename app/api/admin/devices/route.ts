@@ -64,7 +64,10 @@ async function readDevices(): Promise<DeviceEntry[]> {
 
 export async function GET() {
   if (!(await isAdmin())) {
-    return NextResponse.json({ ok: false, error: "unauthorized" }, { status: 401 });
+    return NextResponse.json(
+      { ok: false, error: "unauthorized" },
+      { status: 401 },
+    );
   }
   const items = await readDevices();
   items.sort((a, b) => b.lastLoginAt - a.lastLoginAt);

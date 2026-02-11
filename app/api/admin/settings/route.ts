@@ -70,9 +70,12 @@ function readSettings(): SiteSettings {
     return {
       ...d,
       ...parsed,
-      heroImage: typeof parsed?.heroImage === "string" ? parsed.heroImage : d.heroImage,
+      heroImage:
+        typeof parsed?.heroImage === "string" ? parsed.heroImage : d.heroImage,
       benefits: Array.isArray(parsed?.benefits) ? parsed.benefits : d.benefits,
-      aboutPhotos: Array.isArray(parsed?.aboutPhotos) ? parsed.aboutPhotos : d.aboutPhotos,
+      aboutPhotos: Array.isArray(parsed?.aboutPhotos)
+        ? parsed.aboutPhotos
+        : d.aboutPhotos,
     };
   } catch {
     const d = defaults();
@@ -89,7 +92,10 @@ function writeSettings(s: SiteSettings) {
 
 export async function GET() {
   if (!(await isAdminAuthed())) {
-    return NextResponse.json({ ok: false, error: "unauthorized" }, { status: 401 });
+    return NextResponse.json(
+      { ok: false, error: "unauthorized" },
+      { status: 401 },
+    );
   }
 
   const s = readSettings();
@@ -98,7 +104,10 @@ export async function GET() {
 
 export async function POST(req: Request) {
   if (!(await isAdminAuthed())) {
-    return NextResponse.json({ ok: false, error: "unauthorized" }, { status: 401 });
+    return NextResponse.json(
+      { ok: false, error: "unauthorized" },
+      { status: 401 },
+    );
   }
 
   const body = await req.json().catch(() => ({}));
@@ -110,9 +119,12 @@ export async function POST(req: Request) {
   if (typeof body.city === "string") next.city = body.city.trim();
   if (typeof body.hours === "string") next.hours = body.hours.trim();
 
-  if (typeof body.heroTitle === "string") next.heroTitle = body.heroTitle.trim();
-  if (typeof body.heroSubtitle === "string") next.heroSubtitle = body.heroSubtitle.trim();
-  if (typeof body.heroImage === "string") next.heroImage = body.heroImage.trim();
+  if (typeof body.heroTitle === "string")
+    next.heroTitle = body.heroTitle.trim();
+  if (typeof body.heroSubtitle === "string")
+    next.heroSubtitle = body.heroSubtitle.trim();
+  if (typeof body.heroImage === "string")
+    next.heroImage = body.heroImage.trim();
   if (typeof body.leadText === "string") next.leadText = body.leadText.trim();
 
   if (Array.isArray(body.benefits)) {
@@ -123,8 +135,10 @@ export async function POST(req: Request) {
     if (next.benefits.length === 0) next.benefits = defaults().benefits;
   }
 
-  if (typeof body.aboutTitle === "string") next.aboutTitle = body.aboutTitle.trim();
-  if (typeof body.aboutText === "string") next.aboutText = body.aboutText.trim();
+  if (typeof body.aboutTitle === "string")
+    next.aboutTitle = body.aboutTitle.trim();
+  if (typeof body.aboutText === "string")
+    next.aboutText = body.aboutText.trim();
 
   if (Array.isArray(body.aboutPhotos)) {
     next.aboutPhotos = body.aboutPhotos

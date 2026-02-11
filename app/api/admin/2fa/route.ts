@@ -59,7 +59,10 @@ function getLabel() {
 
 export async function GET() {
   if (!(await isAdminAuthed())) {
-    return NextResponse.json({ ok: false, error: "unauthorized" }, { status: 401 });
+    return NextResponse.json(
+      { ok: false, error: "unauthorized" },
+      { status: 401 },
+    );
   }
 
   const admin = readAdmin();
@@ -97,7 +100,10 @@ export async function GET() {
 
 export async function POST(req: Request) {
   if (!(await isAdminAuthed())) {
-    return NextResponse.json({ ok: false, error: "unauthorized" }, { status: 401 });
+    return NextResponse.json(
+      { ok: false, error: "unauthorized" },
+      { status: 401 },
+    );
   }
 
   const body = await req.json().catch(() => ({}));
@@ -107,10 +113,16 @@ export async function POST(req: Request) {
 
   if (action === "verify") {
     const code = String(body?.code || "").replace(/\s+/g, "");
-    const pending = typeof admin.totpPendingSecret === "string" ? admin.totpPendingSecret : "";
+    const pending =
+      typeof admin.totpPendingSecret === "string"
+        ? admin.totpPendingSecret
+        : "";
 
     if (!pending) {
-      return NextResponse.json({ ok: false, error: "no_pending" }, { status: 400 });
+      return NextResponse.json(
+        { ok: false, error: "no_pending" },
+        { status: 400 },
+      );
     }
 
     const ok = speakeasy.totp.verify({
@@ -121,7 +133,10 @@ export async function POST(req: Request) {
     });
 
     if (!ok) {
-      return NextResponse.json({ ok: false, error: "bad_code" }, { status: 400 });
+      return NextResponse.json(
+        { ok: false, error: "bad_code" },
+        { status: 400 },
+      );
     }
 
     admin.totpSecret = pending;
@@ -137,12 +152,18 @@ export async function POST(req: Request) {
 
     const secret = typeof admin.totpSecret === "string" ? admin.totpSecret : "";
     if (!secret) {
-      return NextResponse.json({ ok: false, error: "not_enabled" }, { status: 400 });
+      return NextResponse.json(
+        { ok: false, error: "not_enabled" },
+        { status: 400 },
+      );
     }
 
     const passOk = await verifyPassword(password);
     if (!passOk) {
-      return NextResponse.json({ ok: false, error: "bad_password" }, { status: 401 });
+      return NextResponse.json(
+        { ok: false, error: "bad_password" },
+        { status: 401 },
+      );
     }
 
     const codeOk = speakeasy.totp.verify({
@@ -153,7 +174,10 @@ export async function POST(req: Request) {
     });
 
     if (!codeOk) {
-      return NextResponse.json({ ok: false, error: "bad_code" }, { status: 400 });
+      return NextResponse.json(
+        { ok: false, error: "bad_code" },
+        { status: 400 },
+      );
     }
 
     delete admin.totpSecret;

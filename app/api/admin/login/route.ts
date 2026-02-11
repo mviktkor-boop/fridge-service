@@ -38,7 +38,10 @@ export async function POST(req: Request) {
   const storedHash = readPasswordHash();
   if (!storedHash) {
     // Без хэша мы не пускаем (чтобы не было случайного "пустого" входа).
-    return NextResponse.json({ ok: false, error: "admin_not_configured" }, { status: 401 });
+    return NextResponse.json(
+      { ok: false, error: "admin_not_configured" },
+      { status: 401 },
+    );
   }
 
   let ok = false;
@@ -51,7 +54,8 @@ export async function POST(req: Request) {
 
   // 2FA (если включено)
   const admin = readAdmin();
-  const totpSecret = typeof admin.totpSecret === "string" ? admin.totpSecret.trim() : "";
+  const totpSecret =
+    typeof admin.totpSecret === "string" ? admin.totpSecret.trim() : "";
 
   if (totpSecret) {
     const codeOk = speakeasy.totp.verify({
@@ -62,7 +66,10 @@ export async function POST(req: Request) {
     });
 
     if (!codeOk) {
-      return NextResponse.json({ ok: false, error: "need_2fa" }, { status: 401 });
+      return NextResponse.json(
+        { ok: false, error: "need_2fa" },
+        { status: 401 },
+      );
     }
   }
 

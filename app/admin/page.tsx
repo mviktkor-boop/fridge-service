@@ -34,7 +34,9 @@ export default function AdminPage() {
   // LOGIN
   const [password, setPassword] = useState("");
   const [login2faCode, setLogin2faCode] = useState("");
-  const [status, setStatus] = useState<"checking" | "guest" | "authed">("checking");
+  const [status, setStatus] = useState<"checking" | "guest" | "authed">(
+    "checking",
+  );
   const [msg, setMsg] = useState("");
 
   // (оставлено, чтобы ничего не ломать)
@@ -194,7 +196,10 @@ export default function AdminPage() {
       const r = await fetch("/api/admin/2fa", {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ action: "verify", code: twoFaCode.replace(/\s+/g, "") }),
+        body: JSON.stringify({
+          action: "verify",
+          code: twoFaCode.replace(/\s+/g, ""),
+        }),
       });
       const j = await r.json().catch(() => ({}));
 
@@ -205,7 +210,8 @@ export default function AdminPage() {
       } else {
         const err = j?.error;
         if (err === "bad_code") setTwoFaMsg("❌ Неверный код");
-        else if (err === "no_pending") setTwoFaMsg("❌ Секрет не создан (нажми «Показать QR»)");
+        else if (err === "no_pending")
+          setTwoFaMsg("❌ Секрет не создан (нажми «Показать QR»)");
         else setTwoFaMsg("❌ Не удалось включить 2FA");
       }
     } catch {
@@ -264,8 +270,10 @@ export default function AdminPage() {
         }, 600);
       } else {
         const err = j?.error;
-        if (err === "too_short") setPassMsg("❌ Новый пароль слишком короткий (минимум 6)");
-        else if (err === "bad_old_password") setPassMsg("❌ Старый пароль неверный");
+        if (err === "too_short")
+          setPassMsg("❌ Новый пароль слишком короткий (минимум 6)");
+        else if (err === "bad_old_password")
+          setPassMsg("❌ Старый пароль неверный");
         else setPassMsg("❌ Не удалось сменить пароль");
       }
     } catch {
@@ -287,8 +295,12 @@ export default function AdminPage() {
     if (j?.ok) {
       setSettings({
         ...j.settings,
-        benefits: Array.isArray(j.settings?.benefits) ? j.settings.benefits : [],
-        aboutPhotos: Array.isArray(j.settings?.aboutPhotos) ? j.settings.aboutPhotos : [],
+        benefits: Array.isArray(j.settings?.benefits)
+          ? j.settings.benefits
+          : [],
+        aboutPhotos: Array.isArray(j.settings?.aboutPhotos)
+          ? j.settings.aboutPhotos
+          : [],
       });
       setSaveMsg("✅ Сохранено");
     } else {
@@ -323,7 +335,11 @@ export default function AdminPage() {
       const fd = new FormData();
       fd.append("file", file);
 
-      const r = await fetch("/api/admin/upload", { method: "POST", body: fd, credentials: "include" });
+      const r = await fetch("/api/admin/upload", {
+        method: "POST",
+        body: fd,
+        credentials: "include",
+      });
       const j = await r.json().catch(() => ({}));
 
       if (!j?.ok || !j?.url) {
@@ -340,24 +356,28 @@ export default function AdminPage() {
     }
   }
 
-async function uploadHero(file: File) {
-  if (!settings) return;
-  setUploadMsg("Загрузка фото на главную...");
-  try {
-    const fd = new FormData();
-    fd.append("file", file);
-    const r = await fetch("/api/admin/upload", { method: "POST", body: fd, credentials: "include" });
-    const j = await r.json().catch(() => ({}));
-    if (!j?.ok || !j?.url) {
-      setUploadMsg("❌ Не удалось загрузить фото на главную");
-      return;
+  async function uploadHero(file: File) {
+    if (!settings) return;
+    setUploadMsg("Загрузка фото на главную...");
+    try {
+      const fd = new FormData();
+      fd.append("file", file);
+      const r = await fetch("/api/admin/upload", {
+        method: "POST",
+        body: fd,
+        credentials: "include",
+      });
+      const j = await r.json().catch(() => ({}));
+      if (!j?.ok || !j?.url) {
+        setUploadMsg("❌ Не удалось загрузить фото на главную");
+        return;
+      }
+      setSettings({ ...settings, heroImage: String(j.url) });
+      setUploadMsg("✅ Фото загружено (нажми «Сохранить»)");
+    } catch {
+      setUploadMsg("❌ Ошибка загрузки");
     }
-    setSettings({ ...settings, heroImage: String(j.url) });
-    setUploadMsg("✅ Фото загружено (нажми «Сохранить»)");
-  } catch {
-    setUploadMsg("❌ Ошибка загрузки");
   }
-}
 
   async function removePhoto(idx: number) {
     if (!settings) return;
@@ -371,7 +391,10 @@ async function uploadHero(file: File) {
     // физически удалить файл (если uploads)
     if (url && url.startsWith("/uploads/")) {
       try {
-        await fetch(`/api/admin/upload?url=${encodeURIComponent(url)}`, { method: "DELETE", credentials: "include" });
+        await fetch(`/api/admin/upload?url=${encodeURIComponent(url)}`, {
+          method: "DELETE",
+          credentials: "include",
+        });
       } catch {
         // не блокируем UI
       }
@@ -395,13 +418,17 @@ async function uploadHero(file: File) {
     setCleanupMsg("Проверяю...");
     setOrphans([]);
     try {
-      const r = await fetch("/api/admin/uploads/cleanup", { cache: "no-store" });
+      const r = await fetch("/api/admin/uploads/cleanup", {
+        cache: "no-store",
+      });
       const j = await r.json().catch(() => ({}));
       if (j?.ok) {
         const list = Array.isArray(j.orphans) ? j.orphans : [];
-        setOrphans(list.map((x: any) => String(x?.url ?? x ?? "")).filter(Boolean));
+        setOrphans(
+          list.map((x: any) => String(x?.url ?? x ?? "")).filter(Boolean),
+        );
         setCleanupMsg(
-          `Файлов всего: ${j.totalFiles}, используются: ${j.usedCount}, неиспользуемые: ${j.orphanCount}`
+          `Файлов всего: ${j.totalFiles}, используются: ${j.usedCount}, неиспользуемые: ${j.orphanCount}`,
         );
       } else {
         setCleanupMsg("❌ Не удалось получить список");
@@ -419,7 +446,9 @@ async function uploadHero(file: File) {
       if (j?.ok) {
         setCleanupMsg(
           `✅ Удалено: ${j.deleted} из ${j.orphanCount}. Всего: ${j.totalFiles}, используются: ${j.usedCount}` +
-            (Array.isArray(j.failed) && j.failed.length ? ` (ошибки: ${j.failed.length})` : "")
+            (Array.isArray(j.failed) && j.failed.length
+              ? ` (ошибки: ${j.failed.length})`
+              : ""),
         );
         setOrphans([]);
       } else {
@@ -434,57 +463,56 @@ async function uploadHero(file: File) {
     <main style={{ maxWidth: 980, margin: "0 auto", padding: 24 }}>
       <h1>Админка</h1>
 
-
-{status === "authed" && (
-  <nav
-    style={{
-      display: "flex",
-      gap: 10,
-      flexWrap: "wrap",
-      margin: "12px 0 18px",
-    }}
-  >
-    <a
-      href="/admin"
-      style={{
-        padding: "8px 12px",
-        borderRadius: 10,
-        border: "1px solid #ddd",
-        textDecoration: "none",
-        color: "#111",
-        background: "#f7f7f7",
-      }}
-    >
-      Настройки
-    </a>
-    <a
-      href="/admin/counters"
-      style={{
-        padding: "8px 12px",
-        borderRadius: 10,
-        border: "1px solid #ddd",
-        textDecoration: "none",
-        color: "#111",
-        background: "#fff",
-      }}
-    >
-      Счётчики
-    </a>
-    <a
-      href="/admin/devices"
-      style={{
-        padding: "8px 12px",
-        borderRadius: 10,
-        border: "1px solid #ddd",
-        textDecoration: "none",
-        color: "#111",
-        background: "#fff",
-      }}
-    >
-      Устройства
-    </a>
-  </nav>
-)}
+      {status === "authed" && (
+        <nav
+          style={{
+            display: "flex",
+            gap: 10,
+            flexWrap: "wrap",
+            margin: "12px 0 18px",
+          }}
+        >
+          <a
+            href="/admin"
+            style={{
+              padding: "8px 12px",
+              borderRadius: 10,
+              border: "1px solid #ddd",
+              textDecoration: "none",
+              color: "#111",
+              background: "#f7f7f7",
+            }}
+          >
+            Настройки
+          </a>
+          <a
+            href="/admin/counters"
+            style={{
+              padding: "8px 12px",
+              borderRadius: 10,
+              border: "1px solid #ddd",
+              textDecoration: "none",
+              color: "#111",
+              background: "#fff",
+            }}
+          >
+            Счётчики
+          </a>
+          <a
+            href="/admin/devices"
+            style={{
+              padding: "8px 12px",
+              borderRadius: 10,
+              border: "1px solid #ddd",
+              textDecoration: "none",
+              color: "#111",
+              background: "#fff",
+            }}
+          >
+            Устройства
+          </a>
+        </nav>
+      )}
 
       {/* ГОСТЬ: ФОРМА ВХОДА */}
       {status === "guest" && (
@@ -505,7 +533,9 @@ async function uploadHero(file: File) {
           <input
             type="text"
             value={login2faCode}
-            onChange={(e) => setLogin2faCode(e.target.value.replace(/\s+/g, ""))}
+            onChange={(e) =>
+              setLogin2faCode(e.target.value.replace(/\s+/g, ""))
+            }
             placeholder="Код 2FA (если включён)"
             inputMode="numeric"
           />
@@ -522,7 +552,13 @@ async function uploadHero(file: File) {
       {status === "authed" && settings && (
         <>
           {/* ВЫХОД */}
-          <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: 10 }}>
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "flex-end",
+              marginBottom: 10,
+            }}
+          >
             <button type="button" onClick={logout}>
               Выйти
             </button>
@@ -539,80 +575,120 @@ async function uploadHero(file: File) {
 
             <input
               value={settings.city}
-              onChange={(e) => setSettings({ ...settings, city: e.target.value })}
+              onChange={(e) =>
+                setSettings({ ...settings, city: e.target.value })
+              }
               placeholder="Город"
             />
             <input
               value={settings.phone}
-              onChange={(e) => setSettings({ ...settings, phone: e.target.value })}
+              onChange={(e) =>
+                setSettings({ ...settings, phone: e.target.value })
+              }
               placeholder="Телефон"
             />
             <input
               value={settings.hours}
-              onChange={(e) => setSettings({ ...settings, hours: e.target.value })}
+              onChange={(e) =>
+                setSettings({ ...settings, hours: e.target.value })
+              }
               placeholder="Часы работы"
             />
             <input
               value={settings.heroTitle}
-              onChange={(e) => setSettings({ ...settings, heroTitle: e.target.value })}
+              onChange={(e) =>
+                setSettings({ ...settings, heroTitle: e.target.value })
+              }
               placeholder="Заголовок"
             />
             <input
               value={settings.heroSubtitle}
-              onChange={(e) => setSettings({ ...settings, heroSubtitle: e.target.value })}
+              onChange={(e) =>
+                setSettings({ ...settings, heroSubtitle: e.target.value })
+              }
               placeholder="Подзаголовок"
             />
-<div style={{ padding: 14, border: "1px solid rgba(0,0,0,0.12)", borderRadius: 14 }}>
-  <div style={{ fontWeight: 900, marginBottom: 8 }}>Фото на главной</div>
-  {settings.heroImage ? (
-    <div style={{ display: "grid", gap: 10 }}>
-      <img
-        src={settings.heroImage}
-        alt="Hero"
-        style={{ width: "100%", maxWidth: 520, borderRadius: 14, border: "1px solid rgba(0,0,0,0.12)" }}
-      />
-      <div style={{ fontSize: 13, opacity: 0.75 }}>Текущий путь: {settings.heroImage}</div>
-    </div>
-  ) : (
-    <div style={{ fontSize: 13, opacity: 0.75 }}>Фото не задано (будет использоваться /hero-bg.jpg)</div>
-  )}
-  <div style={{ display: "flex", gap: 10, flexWrap: "wrap", marginTop: 12 }}>
-    <button type="button" onClick={() => heroFileRef.current?.click()}>
-      Загрузить фото
-    </button>
-    <button
-      type="button"
-      onClick={() => setSettings({ ...settings, heroImage: "" })}
-      disabled={!settings.heroImage}
-    >
-      Убрать фото
-    </button>
-    <input
-      ref={heroFileRef}
-      type="file"
-      accept="image/*"
-      style={{ display: "none" }}
-      onChange={(e) => {
-        const f = e.target.files?.[0];
-        if (f) uploadHero(f);
-        e.currentTarget.value = "";
-      }}
-    />
-  </div>
-  <div style={{ marginTop: 8, fontSize: 13, opacity: 0.85 }}>
-    После загрузки нажми <b>«Сохранить»</b>.
-  </div>
-</div>
-
+            <div
+              style={{
+                padding: 14,
+                border: "1px solid rgba(0,0,0,0.12)",
+                borderRadius: 14,
+              }}
+            >
+              <div style={{ fontWeight: 900, marginBottom: 8 }}>
+                Фото на главной
+              </div>
+              {settings.heroImage ? (
+                <div style={{ display: "grid", gap: 10 }}>
+                  <img
+                    src={settings.heroImage}
+                    alt="Hero"
+                    style={{
+                      width: "100%",
+                      maxWidth: 520,
+                      borderRadius: 14,
+                      border: "1px solid rgba(0,0,0,0.12)",
+                    }}
+                  />
+                  <div style={{ fontSize: 13, opacity: 0.75 }}>
+                    Текущий путь: {settings.heroImage}
+                  </div>
+                </div>
+              ) : (
+                <div style={{ fontSize: 13, opacity: 0.75 }}>
+                  Фото не задано (будет использоваться /hero-bg.jpg)
+                </div>
+              )}
+              <div
+                style={{
+                  display: "flex",
+                  gap: 10,
+                  flexWrap: "wrap",
+                  marginTop: 12,
+                }}
+              >
+                <button
+                  type="button"
+                  onClick={() => heroFileRef.current?.click()}
+                >
+                  Загрузить фото
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setSettings({ ...settings, heroImage: "" })}
+                  disabled={!settings.heroImage}
+                >
+                  Убрать фото
+                </button>
+                <input
+                  ref={heroFileRef}
+                  type="file"
+                  accept="image/*"
+                  style={{ display: "none" }}
+                  onChange={(e) => {
+                    const f = e.target.files?.[0];
+                    if (f) uploadHero(f);
+                    e.currentTarget.value = "";
+                  }}
+                />
+              </div>
+              <div style={{ marginTop: 8, fontSize: 13, opacity: 0.85 }}>
+                После загрузки нажми <b>«Сохранить»</b>.
+              </div>
+            </div>
 
             <textarea
               value={settings.leadText}
-              onChange={(e) => setSettings({ ...settings, leadText: e.target.value })}
+              onChange={(e) =>
+                setSettings({ ...settings, leadText: e.target.value })
+              }
               rows={3}
               placeholder="Текст под формой заявки"
             />
 
-            <div style={{ marginTop: 6, fontWeight: 900 }}>Почему выбирают нас</div>
+            <div style={{ marginTop: 6, fontWeight: 900 }}>
+              Почему выбирают нас
+            </div>
             {[0, 1, 2].map((i) => (
               <input
                 key={i}
@@ -632,17 +708,28 @@ async function uploadHero(file: File) {
 
             <input
               value={settings.aboutTitle || ""}
-              onChange={(e) => setSettings({ ...settings, aboutTitle: e.target.value })}
+              onChange={(e) =>
+                setSettings({ ...settings, aboutTitle: e.target.value })
+              }
               placeholder="Заголовок"
             />
             <textarea
               value={settings.aboutText || ""}
-              onChange={(e) => setSettings({ ...settings, aboutText: e.target.value })}
+              onChange={(e) =>
+                setSettings({ ...settings, aboutText: e.target.value })
+              }
               rows={5}
               placeholder="Текст страницы"
             />
 
-            <div style={{ display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap" }}>
+            <div
+              style={{
+                display: "flex",
+                gap: 10,
+                alignItems: "center",
+                flexWrap: "wrap",
+              }}
+            >
               <button
                 type="button"
                 onClick={() => {
@@ -683,7 +770,9 @@ async function uploadHero(file: File) {
                       padding: 10,
                     }}
                   >
-                    <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
+                    <div
+                      style={{ display: "flex", gap: 12, alignItems: "center" }}
+                    >
                       {url.startsWith("/uploads/") ? (
                         <img
                           src={url}
@@ -715,13 +804,27 @@ async function uploadHero(file: File) {
                         </div>
                       )}
 
-                      <div style={{ fontSize: 12, opacity: 0.75, maxWidth: 420, overflowWrap: "anywhere" }}>
+                      <div
+                        style={{
+                          fontSize: 12,
+                          opacity: 0.75,
+                          maxWidth: 420,
+                          overflowWrap: "anywhere",
+                        }}
+                      >
                         {url}
                       </div>
                     </div>
 
-                    <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
-                      <button type="button" onClick={() => movePhoto(idx, idx - 1)} disabled={idx === 0} title="Вверх">
+                    <div
+                      style={{ display: "flex", gap: 8, alignItems: "center" }}
+                    >
+                      <button
+                        type="button"
+                        onClick={() => movePhoto(idx, idx - 1)}
+                        disabled={idx === 0}
+                        title="Вверх"
+                      >
                         ↑
                       </button>
 
@@ -745,16 +848,27 @@ async function uploadHero(file: File) {
               <div style={{ opacity: 0.75 }}>Фото пока не добавлены.</div>
             )}
 
-            <div style={{ marginTop: 10, fontWeight: 900 }}>Очистка uploads</div>
+            <div style={{ marginTop: 10, fontWeight: 900 }}>
+              Очистка uploads
+            </div>
 
-            <div style={{ display: "flex", gap: 10, flexWrap: "wrap", alignItems: "center" }}>
+            <div
+              style={{
+                display: "flex",
+                gap: 10,
+                flexWrap: "wrap",
+                alignItems: "center",
+              }}
+            >
               <button type="button" onClick={previewCleanup}>
                 Показать что будет удалено
               </button>
               <button type="button" onClick={runCleanup}>
                 Очистить неиспользуемые фото
               </button>
-              {cleanupMsg && <span style={{ opacity: 0.85 }}>{cleanupMsg}</span>}
+              {cleanupMsg && (
+                <span style={{ opacity: 0.85 }}>{cleanupMsg}</span>
+              )}
             </div>
 
             {orphans.length > 0 && (
@@ -771,7 +885,14 @@ async function uploadHero(file: File) {
                 }}
               >
                 {orphans.map((u) => (
-                  <div key={u} style={{ fontSize: 12, opacity: 0.8, overflowWrap: "anywhere" }}>
+                  <div
+                    key={u}
+                    style={{
+                      fontSize: 12,
+                      opacity: 0.8,
+                      overflowWrap: "anywhere",
+                    }}
+                  >
                     {u}
                   </div>
                 ))}
@@ -782,7 +903,14 @@ async function uploadHero(file: File) {
 
             <hr style={{ margin: "18px 0" }} />
 
-            <div style={{ display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap" }}>
+            <div
+              style={{
+                display: "flex",
+                gap: 10,
+                alignItems: "center",
+                flexWrap: "wrap",
+              }}
+            >
               <button type="submit">Сохранить</button>
               {saveMsg && <div>{saveMsg}</div>}
             </div>
@@ -805,7 +933,11 @@ async function uploadHero(file: File) {
               onChange={(e) => setNewPass(e.target.value)}
               placeholder="Новый пароль (минимум 6 символов)"
             />
-            <button type="button" onClick={changePassword} disabled={!oldPass || !newPass}>
+            <button
+              type="button"
+              onClick={changePassword}
+              disabled={!oldPass || !newPass}
+            >
               Сменить пароль
             </button>
             {passMsg && <div style={{ opacity: 0.9 }}>{passMsg}</div>}
@@ -816,7 +948,14 @@ async function uploadHero(file: File) {
 
           <div style={{ display: "grid", gap: 10, maxWidth: 520 }}>
             <div style={{ opacity: 0.85 }}>
-              Статус: <b>{twoFaEnabled === null ? "..." : twoFaEnabled ? "Включена" : "Выключена"}</b>
+              Статус:{" "}
+              <b>
+                {twoFaEnabled === null
+                  ? "..."
+                  : twoFaEnabled
+                    ? "Включена"
+                    : "Выключена"}
+              </b>
             </div>
 
             {!twoFaEnabled && (
@@ -847,7 +986,11 @@ async function uploadHero(file: File) {
                       width: "fit-content",
                     }}
                   >
-                    <img src={twoFaQr} alt="2FA QR" style={{ width: 220, height: 220 }} />
+                    <img
+                      src={twoFaQr}
+                      alt="2FA QR"
+                      style={{ width: 220, height: 220 }}
+                    />
                   </div>
                 )}
 
@@ -880,7 +1023,11 @@ async function uploadHero(file: File) {
                   inputMode="numeric"
                 />
 
-                <button type="button" onClick={disable2fa} disabled={!twoFaDisablePass || !twoFaCode}>
+                <button
+                  type="button"
+                  onClick={disable2fa}
+                  disabled={!twoFaDisablePass || !twoFaCode}
+                >
                   Выключить 2FA
                 </button>
               </>
@@ -908,12 +1055,27 @@ async function uploadHero(file: File) {
                 }}
               >
                 <b>{r.name}</b> — {fmt(r.createdAt)}
-                <div style={{ marginTop: 8, whiteSpace: "pre-wrap" }}>{r.text}</div>
-                <div style={{ display: "flex", gap: 10, marginTop: 10, flexWrap: "wrap" }}>
-                  <button type="button" onClick={() => reviewAction("approve", r.id)}>
+                <div style={{ marginTop: 8, whiteSpace: "pre-wrap" }}>
+                  {r.text}
+                </div>
+                <div
+                  style={{
+                    display: "flex",
+                    gap: 10,
+                    marginTop: 10,
+                    flexWrap: "wrap",
+                  }}
+                >
+                  <button
+                    type="button"
+                    onClick={() => reviewAction("approve", r.id)}
+                  >
                     Одобрить
                   </button>
-                  <button type="button" onClick={() => reviewAction("delete", r.id)}>
+                  <button
+                    type="button"
+                    onClick={() => reviewAction("delete", r.id)}
+                  >
                     Удалить
                   </button>
                 </div>
@@ -936,9 +1098,21 @@ async function uploadHero(file: File) {
                 }}
               >
                 <b>{r.name}</b> — {fmt(r.createdAt)}
-                <div style={{ marginTop: 8, whiteSpace: "pre-wrap" }}>{r.text}</div>
-                <div style={{ display: "flex", gap: 10, marginTop: 10, flexWrap: "wrap" }}>
-                  <button type="button" onClick={() => reviewAction("delete", r.id)}>
+                <div style={{ marginTop: 8, whiteSpace: "pre-wrap" }}>
+                  {r.text}
+                </div>
+                <div
+                  style={{
+                    display: "flex",
+                    gap: 10,
+                    marginTop: 10,
+                    flexWrap: "wrap",
+                  }}
+                >
+                  <button
+                    type="button"
+                    onClick={() => reviewAction("delete", r.id)}
+                  >
                     Удалить
                   </button>
                 </div>

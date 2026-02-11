@@ -77,7 +77,10 @@ function clean(v: unknown) {
 
 export async function GET() {
   if (!(await isAdmin())) {
-    return NextResponse.json({ ok: false, error: "unauthorized" }, { status: 401 });
+    return NextResponse.json(
+      { ok: false, error: "unauthorized" },
+      { status: 401 },
+    );
   }
   const data = await readCounters();
   return NextResponse.json({ ok: true, data });
@@ -85,7 +88,10 @@ export async function GET() {
 
 export async function POST(req: Request) {
   if (!(await isAdmin())) {
-    return NextResponse.json({ ok: false, error: "unauthorized" }, { status: 401 });
+    return NextResponse.json(
+      { ok: false, error: "unauthorized" },
+      { status: 401 },
+    );
   }
 
   const body = await req.json().catch(() => ({}));
@@ -97,13 +103,22 @@ export async function POST(req: Request) {
 
   // very light validation
   if (next.yandexMetrikaId && !/^\d{4,20}$/.test(next.yandexMetrikaId)) {
-    return NextResponse.json({ ok: false, error: "bad_yandex_id" }, { status: 400 });
+    return NextResponse.json(
+      { ok: false, error: "bad_yandex_id" },
+      { status: 400 },
+    );
   }
   if (next.googleTagId && !/^[A-Za-z0-9\-_]{6,40}$/.test(next.googleTagId)) {
-    return NextResponse.json({ ok: false, error: "bad_google_tag_id" }, { status: 400 });
+    return NextResponse.json(
+      { ok: false, error: "bad_google_tag_id" },
+      { status: 400 },
+    );
   }
   if (next.customHtml.length > 200_000) {
-    return NextResponse.json({ ok: false, error: "custom_html_too_large" }, { status: 400 });
+    return NextResponse.json(
+      { ok: false, error: "custom_html_too_large" },
+      { status: 400 },
+    );
   }
 
   await writeCounters(next);

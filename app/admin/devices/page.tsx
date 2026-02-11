@@ -12,13 +12,18 @@ type DeviceEntry = {
 };
 
 export default function AdminDevicesPage() {
-  const [status, setStatus] = useState<"loading" | "guest" | "authed">("loading");
+  const [status, setStatus] = useState<"loading" | "guest" | "authed">(
+    "loading",
+  );
   const [items, setItems] = useState<DeviceEntry[]>([]);
   const [msg, setMsg] = useState<string>("");
 
   async function check() {
     try {
-      const r = await fetch("/api/admin/me", { cache: "no-store", credentials: "include" });
+      const r = await fetch("/api/admin/me", {
+        cache: "no-store",
+        credentials: "include",
+      });
       const j = await r.json().catch(() => ({}));
       setStatus(j?.ok ? "authed" : "guest");
       return Boolean(j?.ok);
@@ -34,7 +39,10 @@ export default function AdminDevicesPage() {
     if (!ok) return;
 
     try {
-      const r = await fetch("/api/admin/devices", { cache: "no-store", credentials: "include" });
+      const r = await fetch("/api/admin/devices", {
+        cache: "no-store",
+        credentials: "include",
+      });
       const j = await r.json().catch(() => ({}));
       if (j?.ok) setItems(j.items || []);
       else setMsg("Не удалось загрузить устройства.");
@@ -52,7 +60,14 @@ export default function AdminDevicesPage() {
       <h1>Админка</h1>
 
       {status === "authed" && (
-        <nav style={{ display: "flex", gap: 10, flexWrap: "wrap", margin: "12px 0 18px" }}>
+        <nav
+          style={{
+            display: "flex",
+            gap: 10,
+            flexWrap: "wrap",
+            margin: "12px 0 18px",
+          }}
+        >
           <a
             href="/admin"
             style={{
@@ -98,7 +113,9 @@ export default function AdminDevicesPage() {
       {status === "loading" && <p>Загрузка…</p>}
 
       {status === "guest" && (
-        <div style={{ padding: 16, border: "1px solid #eee", borderRadius: 12 }}>
+        <div
+          style={{ padding: 16, border: "1px solid #eee", borderRadius: 12 }}
+        >
           <p style={{ margin: 0 }}>
             Сначала войди в админку на странице{" "}
             <a href="/admin" style={{ fontWeight: 700 }}>
@@ -132,29 +149,94 @@ export default function AdminDevicesPage() {
             <table style={{ width: "100%", borderCollapse: "collapse" }}>
               <thead>
                 <tr>
-                  <th style={{ textAlign: "left", borderBottom: "1px solid #eee", padding: 8 }}>Когда</th>
-                  <th style={{ textAlign: "left", borderBottom: "1px solid #eee", padding: 8 }}>IP</th>
-                  <th style={{ textAlign: "left", borderBottom: "1px solid #eee", padding: 8 }}>Устройство</th>
-                  <th style={{ textAlign: "right", borderBottom: "1px solid #eee", padding: 8 }}>Входов</th>
+                  <th
+                    style={{
+                      textAlign: "left",
+                      borderBottom: "1px solid #eee",
+                      padding: 8,
+                    }}
+                  >
+                    Когда
+                  </th>
+                  <th
+                    style={{
+                      textAlign: "left",
+                      borderBottom: "1px solid #eee",
+                      padding: 8,
+                    }}
+                  >
+                    IP
+                  </th>
+                  <th
+                    style={{
+                      textAlign: "left",
+                      borderBottom: "1px solid #eee",
+                      padding: 8,
+                    }}
+                  >
+                    Устройство
+                  </th>
+                  <th
+                    style={{
+                      textAlign: "right",
+                      borderBottom: "1px solid #eee",
+                      padding: 8,
+                    }}
+                  >
+                    Входов
+                  </th>
                 </tr>
               </thead>
               <tbody>
                 {items.map((it) => (
                   <tr key={it.id}>
-                    <td style={{ borderBottom: "1px solid #f2f2f2", padding: 8, whiteSpace: "nowrap" }}>
-                      {it.lastLoginAt ? new Date(it.lastLoginAt).toLocaleString() : "-"}
+                    <td
+                      style={{
+                        borderBottom: "1px solid #f2f2f2",
+                        padding: 8,
+                        whiteSpace: "nowrap",
+                      }}
+                    >
+                      {it.lastLoginAt
+                        ? new Date(it.lastLoginAt).toLocaleString()
+                        : "-"}
                     </td>
-                    <td style={{ borderBottom: "1px solid #f2f2f2", padding: 8, whiteSpace: "nowrap" }}>{it.ip}</td>
-                    <td style={{ borderBottom: "1px solid #f2f2f2", padding: 8, minWidth: 240 }}>
-                      <div style={{ fontSize: 12, opacity: 0.85 }}>{it.userAgent}</div>
+                    <td
+                      style={{
+                        borderBottom: "1px solid #f2f2f2",
+                        padding: 8,
+                        whiteSpace: "nowrap",
+                      }}
+                    >
+                      {it.ip}
                     </td>
-                    <td style={{ borderBottom: "1px solid #f2f2f2", padding: 8, textAlign: "right" }}>{it.logins}</td>
+                    <td
+                      style={{
+                        borderBottom: "1px solid #f2f2f2",
+                        padding: 8,
+                        minWidth: 240,
+                      }}
+                    >
+                      <div style={{ fontSize: 12, opacity: 0.85 }}>
+                        {it.userAgent}
+                      </div>
+                    </td>
+                    <td
+                      style={{
+                        borderBottom: "1px solid #f2f2f2",
+                        padding: 8,
+                        textAlign: "right",
+                      }}
+                    >
+                      {it.logins}
+                    </td>
                   </tr>
                 ))}
                 {items.length === 0 && (
                   <tr>
                     <td colSpan={4} style={{ padding: 12, opacity: 0.8 }}>
-                      Пока пусто. Записи появляются после успешных входов в админку.
+                      Пока пусто. Записи появляются после успешных входов в
+                      админку.
                     </td>
                   </tr>
                 )}

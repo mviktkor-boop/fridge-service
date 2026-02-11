@@ -45,7 +45,10 @@ function writePasswordHash(hash: string) {
 
 export async function POST(req: Request) {
   if (!(await isAdminAuthed())) {
-    return NextResponse.json({ ok: false, error: "unauthorized" }, { status: 401 });
+    return NextResponse.json(
+      { ok: false, error: "unauthorized" },
+      { status: 401 },
+    );
   }
 
   const body = await req.json().catch(() => ({}));
@@ -53,12 +56,18 @@ export async function POST(req: Request) {
   const newPassword = String(body?.newPassword || "");
 
   if (newPassword.length < 6) {
-    return NextResponse.json({ ok: false, error: "too_short" }, { status: 400 });
+    return NextResponse.json(
+      { ok: false, error: "too_short" },
+      { status: 400 },
+    );
   }
 
   const storedHash = readPasswordHash();
   if (!storedHash) {
-    return NextResponse.json({ ok: false, error: "admin_not_configured" }, { status: 400 });
+    return NextResponse.json(
+      { ok: false, error: "admin_not_configured" },
+      { status: 400 },
+    );
   }
 
   let oldOk = false;
@@ -69,7 +78,10 @@ export async function POST(req: Request) {
   }
 
   if (!oldOk) {
-    return NextResponse.json({ ok: false, error: "bad_old_password" }, { status: 401 });
+    return NextResponse.json(
+      { ok: false, error: "bad_old_password" },
+      { status: 401 },
+    );
   }
 
   const hash = await bcrypt.hash(newPassword, 10);

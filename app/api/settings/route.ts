@@ -63,7 +63,9 @@ function readSettings(): SiteSettings {
       ...d,
       ...parsed,
       benefits: Array.isArray(parsed?.benefits) ? parsed.benefits : d.benefits,
-      aboutPhotos: Array.isArray(parsed?.aboutPhotos) ? parsed.aboutPhotos : d.aboutPhotos,
+      aboutPhotos: Array.isArray(parsed?.aboutPhotos)
+        ? parsed.aboutPhotos
+        : d.aboutPhotos,
     };
   } catch {
     const d = defaults();

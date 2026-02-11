@@ -59,7 +59,6 @@ async function getSettings(): Promise<Settings> {
   return {};
 }
 
-
 export default async function AboutPage() {
   const s = await getSettings();
 
@@ -131,7 +130,14 @@ export default async function AboutPage() {
       >
         <div>
           <h1 style={{ fontSize: 34, margin: 0 }}>{title}</h1>
-          <p style={{ marginTop: 10, fontSize: 16, opacity: 0.85, whiteSpace: "pre-wrap" }}>
+          <p
+            style={{
+              marginTop: 10,
+              fontSize: 16,
+              opacity: 0.85,
+              whiteSpace: "pre-wrap",
+            }}
+          >
             {text}
           </p>
         </div>
@@ -144,8 +150,12 @@ export default async function AboutPage() {
           >
             {phone}
           </a>
-          <div style={{ marginTop: 6, fontSize: 14, opacity: 0.75 }}>{hours}</div>
-          <div style={{ marginTop: 6, fontSize: 14, opacity: 0.75 }}>{city}</div>
+          <div style={{ marginTop: 6, fontSize: 14, opacity: 0.75 }}>
+            {hours}
+          </div>
+          <div style={{ marginTop: 6, fontSize: 14, opacity: 0.75 }}>
+            {city}
+          </div>
         </div>
       </header>
 
@@ -183,7 +193,14 @@ export default async function AboutPage() {
                     loading="lazy"
                   />
                 ) : (
-                  <div style={{ padding: 18, opacity: 0.85, textAlign: "center", whiteSpace: "pre-wrap" }}>
+                  <div
+                    style={{
+                      padding: 18,
+                      opacity: 0.85,
+                      textAlign: "center",
+                      whiteSpace: "pre-wrap",
+                    }}
+                  >
                     {String(p)}
                   </div>
                 )}

@@ -14,14 +14,20 @@ export async function POST(req: Request) {
     const problem = clean(body.problem);
 
     if (!phone || phone.length < 6) {
-      return NextResponse.json({ ok: false, error: "invalid_phone" }, { status: 400 });
+      return NextResponse.json(
+        { ok: false, error: "invalid_phone" },
+        { status: 400 },
+      );
     }
 
     const token = process.env.TG_BOT_TOKEN;
     const chatId = process.env.TG_CHAT_ID;
 
     if (!token || !chatId) {
-      return NextResponse.json({ ok: false, error: "tg_not_configured" }, { status: 500 });
+      return NextResponse.json(
+        { ok: false, error: "tg_not_configured" },
+        { status: 500 },
+      );
     }
 
     const text =
@@ -32,23 +38,32 @@ export async function POST(req: Request) {
       `Проблема: ${problem || "—"}\n` +
       `Время: ${new Date().toLocaleString("ru-RU")}`;
 
-    const resp = await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
-      method: "POST",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify({
-        chat_id: chatId,
-        text,
-        disable_web_page_preview: true,
-      }),
-    });
+    const resp = await fetch(
+      `https://api.telegram.org/bot${token}/sendMessage`,
+      {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          chat_id: chatId,
+          text,
+          disable_web_page_preview: true,
+        }),
+      },
+    );
 
     if (!resp.ok) {
       const details = await resp.text();
-      return NextResponse.json({ ok: false, error: "tg_error", details }, { status: 502 });
+      return NextResponse.json(
+        { ok: false, error: "tg_error", details },
+        { status: 502 },
+      );
     }
 
     return NextResponse.json({ ok: true });
   } catch {
-    return NextResponse.json({ ok: false, error: "bad_request" }, { status: 400 });
+    return NextResponse.json(
+      { ok: false, error: "bad_request" },
+      { status: 400 },
+    );
   }
 }

@@ -42,3 +42,7 @@ tree.txt
 
 # runtime counters (do not commit)
 /data/counters.json
+
+# local debug files
+FULL_FILE_LIST.txt
+full-tree.txt

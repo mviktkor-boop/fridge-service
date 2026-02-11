@@ -63,7 +63,7 @@ async function getSettings(): Promise<Settings> {
 export default async function AboutPage() {
   const s = await getSettings();
 
-  const phone = s.phone || "12345678";
+  const phone = s.phone || "";
   const city = s.city || "Саратов";
   const hours = s.hours || "9:00–21:00 ежедневно";
 

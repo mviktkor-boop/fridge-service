@@ -25,7 +25,7 @@ function dataPath() {
 
 function defaults(): SiteSettings {
   return {
-    phone: "12345678",
+    phone: "",
     city: "Саратов",
     hours: "9:00–21:00 ежедневно",
     heroTitle: "Ремонт холодильников на дому",
